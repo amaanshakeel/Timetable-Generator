@@ -2907,3 +2907,91 @@ hr {
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep navigation visible; reserve only a compact row for backups. */
+.sidebar {
+  height: 100dvh;
+  overflow: hidden;
+}
+.sidebar .brand {
+  height: 80px;
+  flex-shrink: 0;
+}
+.sidebar .workspace-label {
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+.sidebar nav {
+  flex: 1;
+  min-height: 0;
+}
+.sidebar .nav-item {
+  min-height: 38px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  margin-bottom: 4px;
+}
+.sidebar .nav-section {
+  padding-top: 14px;
+  padding-bottom: 9px;
+}
+.sidebar .sidebar-bottom {
+  padding-top: 12px;
+  flex-shrink: 0;
+}
+.sidebar-backup {
+  width: 100%;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 11px;
+  border: 1px solid #e7eaf3;
+  border-radius: 8px;
+  background: #f8f9fd;
+  color: var(--navy);
+  text-align: left;
+  font-size: 10px;
+  font-weight: 500;
+}
+.sidebar-backup > span {
+  flex: 1;
+}
+.sidebar-backup:hover {
+  background: #eef1fb;
+  border-color: #d7ddef;
+}
+.sidebar .sidebar-foot {
+  margin-top: 12px;
+  padding: 12px 0;
+}
+@media (max-height: 760px) {
+  .sidebar .brand {
+    height: 66px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .sidebar .workspace-label {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  .sidebar .nav-item {
+    min-height: 33px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    margin-bottom: 2px;
+  }
+  .sidebar .nav-section {
+    padding-top: 10px;
+    padding-bottom: 7px;
+  }
+  .sidebar .sidebar-bottom {
+    padding-top: 8px;
+  }
+  .sidebar .sidebar-foot {
+    margin-top: 9px;
+    padding: 9px 0;
+  }
+}

@@ -269,21 +269,15 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="local-card">
-            <span className="local-icon">
-              <ShieldCheck size={20} />
-            </span>
-            <strong>Workspace storage</strong>
-            <p>
-              Automatically saved in this browser. Export a backup for
-              safekeeping.
-            </p>
-            <button onClick={backup} className="backup-link">
-              <Download size={14} />
-              Export backup
-              <ArrowUpRight size={13} />
-            </button>
-          </div>
+          <button
+            onClick={backup}
+            className="sidebar-backup"
+            title="Your work saves automatically in this browser. Download a backup to keep a separate copy."
+          >
+            <Download size={15} />
+            <span>Export backup</span>
+            <ArrowUpRight size={13} />
+          </button>
           <div className="sidebar-foot">
             <span className="uor-mark">U</span>
             <div>
