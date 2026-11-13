@@ -48,10 +48,10 @@ const titles = {
   rooms: "Rooms",
 };
 const descriptions = {
-  departments: "Bring every department into one connected schedule.",
-  subjects: "Build your curriculum, one semester and department at a time.",
-  teachers: "The right subjects, availability, and a balanced teaching week.",
-  rooms: "A shared university space for every class.",
+  departments: "Manage the departments included in the university timetable.",
+  subjects: "Enter subject requirements by semester and department.",
+  teachers: "Manage eligible subjects and availability for each teacher.",
+  rooms: "Manage room types and weekly availability.",
 };
 export function DataPanel({
   kind,
@@ -158,7 +158,7 @@ export function DataPanel({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">YOUR UNIVERSITY, CONNECTED</span>
+          <span className="eyebrow">UNIVERSITY DATA</span>
           <h1>{titles[kind]}</h1>
           <p>{descriptions[kind]}</p>
         </div>

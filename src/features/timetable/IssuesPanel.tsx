@@ -15,7 +15,7 @@ export function IssuesPanel({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">EVERY DETAIL, ACCOUNTED FOR</span>
+          <span className="eyebrow">SCHEDULE VALIDATION</span>
           <h1>Clashes & issues</h1>
           <p>
             University-wide checks, even when timetable filters hide a class.
@@ -114,7 +114,7 @@ export function WorkloadPanel({ project: p }: { project: Project }) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">A BETTER BALANCE</span>
+          <span className="eyebrow">FACULTY PLANNING</span>
           <h1>Faculty workload</h1>
           <p>
             One shared session counts once, however many departments attend.

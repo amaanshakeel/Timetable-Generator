@@ -7,9 +7,8 @@ export function useProject() {
   const store = useRef<ProjectStore | null>(null);
   if (!store.current) store.current = new ProjectStore();
   const [project, setProject] = useState<Project>(emptyProject),
-    [saved, setSaved] = useState<Project | null>(null),
     [ready, setReady] = useState(false),
-    [started, setStarted] = useState(false),
+    [restored, setRestored] = useState(false),
     [status, setStatus] = useState("All changes saved"),
     [error, setError] = useState(""),
     [readOnly, setReadOnly] = useState(true),
@@ -30,7 +29,7 @@ export function useProject() {
         if (p) {
           const valid = validateProject(p);
           if (valid.ok) {
-            setSaved(valid.value);
+            setRestored(true);
             current.current = valid.value;
             setProject(valid.value);
           } else
@@ -64,13 +63,18 @@ export function useProject() {
             return;
           }
           const latest = await store.current!.load();
-          if (latest && latest.revision > current.current.revision) {
+          if (
+            latest &&
+            (latest.id !== current.current.id ||
+              latest.revision !== current.current.revision)
+          ) {
             current.current = latest;
             setProject(latest);
             setHistory([]);
             setFuture([]);
             setFormsEpoch((n) => n + 1);
           }
+          if (!latest) autosaver.current!.enqueue(current.current);
           owner.current = true;
           setReadOnly(false);
           await new Promise<void>((resolve) => {
@@ -166,13 +170,12 @@ export function useProject() {
       setProject(next);
       setHistory([]);
       setFuture([]);
-      setStarted(true);
+      setRestored(false);
       setFormsEpoch((n) => n + 1);
       persist(next, true);
     },
     [persist],
   );
-  const resume = () => setStarted(true);
   const undo = () => {
     if (!owner.current || !history.length) return;
     const prior = history[history.length - 1];
@@ -204,15 +207,13 @@ export function useProject() {
     formsEpoch,
     project,
     ready,
-    started,
-    saved,
+    restored,
     status,
     error,
     setError,
     readOnly,
     takeover: () => claim(true),
     start,
-    resume,
     update,
     undo,
     redo,

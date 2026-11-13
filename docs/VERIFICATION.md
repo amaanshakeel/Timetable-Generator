@@ -2,6 +2,12 @@
 
 Verified locally on 13 November 2026 using Node.js 24 and Chromium on Windows. The app is ready for local review; publishing to a university-owned repository remains a separate step.
 
+## Dashboard revision
+
+The later user-requested dashboard amendment replaces the welcome/start/resume screens. First use opens a functional Dashboard; reopening automatically restores data and the last selected view. Settings now contains the optional sample-data, import, recovery and reset actions, with confirmation before replacements. The marketing preview and page footer were removed.
+
+After this change, TypeScript and all 26 unit/integration tests passed, all **13 browser workflows** passed, and the production build passed. Direct startup, immediate setup-form access, automatic data/view recovery, and the migrated scheduling/editing/export/takeover workflows were exercised. Desktop and mobile dashboards were visually inspected; the 390px layout has no document-width overflow. A focused independent review found no new material issues in the dashboard/startup change. The earlier 11-workflow record below describes the initial release verification.
+
 ## Checks completed
 
 - TypeScript: `node node_modules/typescript/bin/tsc --noEmit` passed.

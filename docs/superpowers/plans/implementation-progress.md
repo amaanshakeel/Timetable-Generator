@@ -31,3 +31,14 @@ Final: Ruling: printed PDF quality is established by rendered-page inspection he
 Final: Ruling: this new repository has no base branch or remote, so keep the development branch in place instead of offering an inapplicable merge/push menu. Publishing remains pending the university's destination.
 Final verification: TypeScript passed; 26 unit/integration tests passed; all 11 browser workflows passed; production build and repository-subpath browser check passed. Details in docs/VERIFICATION.md.
 Task 7: complete — source saved in local commit 56ac473; no remote configured or published. Development preview remains available at http://127.0.0.1:5173. The plan's per-task checkpoints were consolidated as recorded above; this ledger and docs/VERIFICATION.md are the executed-work record.
+
+## Dashboard amendment — completed
+
+User correction: application/dashboard startup like n8n, without a website welcome or Start project action. Requirements recorded in docs/superpowers/specs/2026-11-13-dashboard-amendment.md.
+
+- Removed welcome/marketing screen and page footer; added operational Dashboard, setup readiness, real counts, schedule status, and direct planning shortcuts.
+- Removed start/resume gates. Automatically initialize a new local workspace and restore saved data plus the last valid selected view.
+- Moved sample data and reset/import/recovery controls into Settings. Explicit replacement confirmation and archival recovery remain.
+- New direct-start/recovery tests observed RED against old startup, then GREEN. Existing browser workflows migrated to use Settings for sample data.
+- Verification: TypeScript passed; 26 unit/integration tests passed; all 13 browser workflows passed; production build passed; desktop/mobile inspected without browser errors or horizontal document overflow.
+- Focused independent review of this amendment found no new material issues.

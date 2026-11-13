@@ -15,11 +15,19 @@ export function SettingsPanel({
   onChange,
   readOnly,
   onError,
+  onLoadSample,
+  onImport,
+  onReset,
+  onRestore,
 }: {
   project: Project;
   onChange: (p: Project) => boolean;
   readOnly: boolean;
   onError: (e: string) => void;
+  onLoadSample: () => void;
+  onImport: () => void;
+  onReset: () => void;
+  onRestore: () => void;
 }) {
   const [s, set, clear, draft] = useDraft(
       p.id + "-settings",
@@ -116,9 +124,9 @@ export function SettingsPanel({
       <DraftNotice draft={draft} />
       <div className="page-heading">
         <div>
-          <span className="eyebrow">A WEEK THAT WORKS FOR YOU</span>
+          <span className="eyebrow">WORKSPACE CONFIGURATION</span>
           <h1>University settings</h1>
-          <p>Define the framework. We’ll build the timetable around it.</p>
+          <p>Configure the teaching week and university scheduling rules.</p>
         </div>
         <button disabled={readOnly} className="btn primary" onClick={prepare}>
           <Save size={17} />
@@ -363,6 +371,28 @@ export function SettingsPanel({
               checks always use these configured slots.
             </p>
           </div>
+          <section className="panel settings-section workspace-data">
+            <h2>Workspace data</h2>
+            <p className="muted small">
+              Manage backups and the data in this browser.
+            </p>
+            <button className="btn secondary" onClick={onImport}>
+              Import backup
+            </button>
+            <button className="btn secondary" onClick={onRestore}>
+              Restore previous snapshot
+            </button>
+            <button className="btn secondary" onClick={onLoadSample}>
+              Load sample data
+            </button>
+            <button className="btn secondary" onClick={onReset}>
+              Reset workspace
+            </button>
+            <p className="muted small">
+              Sample data and resets require confirmation. The previous saved
+              workspace is retained for recovery.
+            </p>
+          </section>
         </aside>
       </fieldset>
       {pending && (

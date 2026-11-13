@@ -1,9 +1,22 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+async function loadSample(page: Page) {
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Load sample data", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Replace with sample data", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: /^University timetable/ }),
+  ).toBeVisible();
+}
+
 test("saving an unchanged subject preserves all its scheduled attendance", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -24,7 +37,9 @@ test("saving an unchanged subject preserves all its scheduled attendance", async
     .fill("Functional English revised");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(
-    page.locator('.data-table tbody').getByText("Functional English revised", { exact: true }),
+    page
+      .locator(".data-table tbody")
+      .getByText("Functional English revised", { exact: true }),
   ).toHaveCount(4);
   await expect(page.locator(".nav-count")).toHaveCount(0);
 });
@@ -32,7 +47,7 @@ test("subject requirement changes show affected classes before applying", async 
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -62,7 +77,7 @@ test("takeover refreshes stale settings and asks how to handle an older dirty dr
   context,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await expect(
     page.getByText("All changes saved", { exact: true }),
   ).toBeVisible();
@@ -73,9 +88,7 @@ test("takeover refreshes stale settings and asks how to handle an older dirty dr
   await b
     .getByRole("button", { name: "Take over editing", exact: true })
     .click();
-  await b
-    .getByRole("button", { name: "Resume previous work", exact: true })
-    .click();
+
   await b.getByRole("button", { name: "Settings", exact: true }).click();
   await b.getByLabel("Academic term").fill("New authoritative term");
   await b.getByRole("button", { name: "Save settings", exact: true }).click();
@@ -96,9 +109,7 @@ test("takeover refreshes stale settings and asks how to handle an older dirty dr
     .getByRole("button", { name: "Save settings", exact: true })
     .click();
   await page.reload();
-  await page
-    .getByRole("button", { name: "Resume previous work", exact: true })
-    .click();
+
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.getByLabel("Academic term")).toHaveValue(
     "New authoritative term",
@@ -108,7 +119,7 @@ test("drag swaps occupied cells and locked classes survive regeneration", async 
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -156,7 +167,7 @@ test("manual conflicts stay editable and issues can open the affected class", as
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -185,9 +196,7 @@ test("builds a complete timetable from staff-entered setup without sample data",
   page,
 }) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Start a new project", exact: true })
-    .click();
+
   await page.getByRole("button", { name: "Departments", exact: true }).click();
   await page
     .getByRole("button", { name: "Add department", exact: true })
@@ -237,10 +246,10 @@ test("setup starts empty and sample project can generate, edit, save and recover
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Your timetable, beautifully organized.",
+      name: /^Dashboard/,
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await expect(
     page.getByRole("heading", { name: /^University timetable/ }),
   ).toBeVisible();
@@ -260,14 +269,12 @@ test("setup starts empty and sample project can generate, edit, save and recover
     page.getByText("All changes saved", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "Resume previous work" }).click();
+
   await expect(page.getByText("Bring lab notebooks").first()).toBeVisible();
 });
 test("setup allows custom teacher and room availability", async ({ page }) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Start a new project", exact: true })
-    .click();
+
   await page.getByRole("button", { name: "Teachers", exact: true }).click();
   await page.getByRole("button", { name: "Add teacher" }).first().click();
   await page.getByLabel("Teacher name").fill("Dr. Test");
@@ -279,7 +286,7 @@ test("exports actual PDF and Excel files and keeps a second tab read-only", asyn
   context,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -337,7 +344,7 @@ test("recovers an unfinished class note after an accidental reload", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
@@ -348,7 +355,7 @@ test("recovers an unfinished class note after an accidental reload", async ({
   await page.locator("[data-session]").first().click();
   await page.getByLabel("Class note").fill("Unfinished note draft");
   await page.reload();
-  await page.getByRole("button", { name: "Resume previous work" }).click();
+
   await page.locator("[data-session]").first().click();
   await expect(page.getByLabel("Class note")).toHaveValue(
     "Unfinished note draft",
@@ -358,14 +365,18 @@ test("new projects do not inherit unfinished teacher forms from the previous pro
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore sample project" }).click();
+  await loadSample(page);
   await page.getByRole("button", { name: "Teachers", exact: true }).click();
   await page.getByRole("button", { name: "Add teacher" }).first().click();
   await page.getByLabel("Teacher name").fill("Old project draft");
   await page.getByRole("button", { name: "Close dialog" }).click();
-  await page.getByRole("button", { name: "New project", exact: true }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page
-    .getByRole("button", { name: "Start new timetable", exact: true })
+    .getByRole("button", { name: "Reset workspace", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Reset workspace", exact: true })
+    .last()
     .click();
   await page.getByRole("button", { name: "Teachers", exact: true }).click();
   await page.getByRole("button", { name: "Add teacher" }).first().click();

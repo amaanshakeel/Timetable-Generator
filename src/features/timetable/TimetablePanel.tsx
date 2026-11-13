@@ -102,12 +102,15 @@ export function TimetablePanel({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">ONE UNIVERSITY. ONE CLEAR VIEW.</span>
+          <span className="eyebrow">UNIVERSITY SCHEDULE</span>
           <h1>
             University timetable{" "}
             <span className="term-label">{p.settings.term}</span>
           </h1>
-          <p>A little less coordination. A lot more clarity.</p>
+          <p>
+            View and edit classes across departments, semesters, rooms, and
+            teaching days.
+          </p>
         </div>
         <button
           className="btn primary"
@@ -459,7 +462,7 @@ export function TimetablePanel({
             <LockKeyhole size={18} />
           </span>
           <div>
-            <strong>Keep what works.</strong>
+            <strong>Locked placements</strong>
             <p>Lock a class to preserve its place when regenerating.</p>
           </div>
         </div>
@@ -468,7 +471,7 @@ export function TimetablePanel({
             <Layers size={18} />
           </span>
           <div>
-            <strong>Shared classes, simplified.</strong>
+            <strong>Combined teaching groups</strong>
             <p>Combined subjects stay connected across every filtered view.</p>
           </div>
         </div>

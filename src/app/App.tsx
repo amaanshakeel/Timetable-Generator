@@ -33,6 +33,7 @@ import {
   LoaderCircle,
   LockKeyhole,
   Info,
+  LayoutDashboard,
 } from "lucide-react";
 import { useProject } from "./useProject";
 import { sampleProject } from "../domain/demo";
@@ -41,11 +42,13 @@ import { findIssues } from "../domain/issues";
 import { parseBackup } from "../storage/projectStore";
 import { DataPanel } from "../features/setup/DataPanels";
 import { SettingsPanel } from "../features/setup/SettingsPanel";
+import { Dashboard } from "../features/dashboard/Dashboard";
 import { TimetablePanel } from "../features/timetable/TimetablePanel";
 import { IssuesPanel, WorkloadPanel } from "../features/timetable/IssuesPanel";
 import { Modal, Confirm } from "../components/ui";
 import type { GenerationResult, Progress } from "../scheduler/search";
 type Page =
+  | "dashboard"
   | "timetable"
   | "departments"
   | "subjects"
@@ -60,6 +63,7 @@ const navigation: {
   icon: ComponentType<{ size?: number }>;
   section?: string;
 }[] = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "timetable", label: "Timetable", icon: CalendarDays },
   {
     id: "departments",
@@ -82,7 +86,16 @@ const navigation: {
 export default function App() {
   const state = useProject(),
     p = state.project;
-  const [page, setPage] = useState<Page>("timetable"),
+  const [page, setPage] = useState<Page>(() => {
+      try {
+        const saved = localStorage.getItem("uor-active-view");
+        return navigation.some((n) => n.id === saved)
+          ? (saved as Page)
+          : "dashboard";
+      } catch {
+        return "dashboard";
+      }
+    }),
     [inspected, setInspected] = useState<string | undefined>(),
     [filter, setFilter] = useState<TimetableFilter>({}),
     [mobile, setMobile] = useState(false),
@@ -92,6 +105,8 @@ export default function App() {
     [busyExport, setBusyExport] = useState(false),
     [imported, setImported] = useState<Project | null>(null),
     [fresh, setFresh] = useState(false),
+    [sample, setSample] = useState(false),
+    [restorationDismissed, setRestorationDismissed] = useState(false),
     [result, setResult] = useState<GenerationResult | null>(null),
     [progress, setProgress] = useState<Progress | null>(null),
     [generating, setGenerating] = useState(false);
@@ -100,6 +115,13 @@ export default function App() {
     input = useRef<HTMLInputElement>(null);
   const issues = useMemo(() => findIssues(p), [p]);
   useEffect(() => () => worker.current?.terminate(), []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("uor-active-view", page);
+    } catch {
+      /* Preference only; project saving reports its own errors. */
+    }
+  }, [page]);
   useEffect(() => {
     const report = () =>
       state.setError(
@@ -251,7 +273,7 @@ export default function App() {
             <span className="local-icon">
               <ShieldCheck size={20} />
             </span>
-            <strong>Your work stays with you</strong>
+            <strong>Workspace storage</strong>
             <p>
               Automatically saved in this browser. Export a backup for
               safekeeping.
@@ -348,247 +370,82 @@ export default function App() {
           </div>
         )}
         <main>
-          {!state.started ? (
-            <section className="welcome">
-              <div className="welcome-copy">
-                <span className="welcome-pill">
-                  <Sparkles size={14} />A smarter way to plan your semester
-                </span>
-                <h1>
-                  Your timetable,
-                  <br />
-                  <em>beautifully organized.</em>
-                </h1>
-                <p>
-                  From classrooms to combined classes. Bring your entire
-                  university together in one effortless planning workspace.
-                </p>
-                <div className="welcome-actions">
-                  {state.saved ? (
-                    <button
-                      className="btn primary large"
-                      onClick={state.resume}
-                    >
-                      Resume previous work
-                      <ArrowRight size={18} />
-                    </button>
-                  ) : (
-                    <button
-                      className="btn primary large"
-                      disabled={state.readOnly}
-                      onClick={() => state.start()}
-                    >
-                      Start a new project
-                      <ArrowRight size={18} />
-                    </button>
-                  )}
-                  <button
-                    className="btn secondary large"
-                    disabled={state.readOnly}
-                    onClick={() => state.start(sampleProject())}
-                  >
-                    Explore sample project
-                    <ArrowUpRight size={17} />
-                  </button>
-                </div>
-                {state.saved && (
-                  <div className="recovery-note">
-                    <CheckCircle2 size={17} />
-                    <div>
-                      <strong>Previous work found</strong>
-                      <span>
-                        Saved {new Date(state.saved.savedAt).toLocaleString()} ·{" "}
-                        {state.saved.sessions.length} classes
-                      </span>
-                      <button onClick={() => setFresh(true)}>
-                        Start a new timetable instead
-                      </button>
-                    </div>
-                  </div>
-                )}
+          <div className="page-content">
+            {state.restored && !restorationDismissed && (
+              <div className="restored-notice">
+                <CheckCircle2 size={15} />
+                <span>Saved workspace restored automatically.</span>
                 <button
-                  className="import-link"
-                  onClick={() => input.current?.click()}
+                  className="icon-btn"
+                  aria-label="Dismiss restoration notice"
+                  onClick={() => setRestorationDismissed(true)}
                 >
-                  <Upload size={15} />
-                  Have a backup? Import your project
+                  <X size={14} />
                 </button>
               </div>
-              <div className="welcome-visual" aria-hidden="true">
-                <div className="visual-glow" />
-                <div className="preview-card">
-                  <div className="preview-card-head">
-                    <span className="avatar color-0">
-                      <CalendarDays size={21} />
-                    </span>
-                    <div>
-                      <strong>A week in harmony</strong>
-                      <small>One connected university schedule</small>
-                    </div>
-                    <span className="preview-dot" />
-                  </div>
-                  <div className="mini-grid">
-                    <div />
-                    <strong>MON</strong>
-                    <strong>TUE</strong>
-                    <strong>WED</strong>
-                    <span>08:30</span>
-                    <div className="mini-class lavender">
-                      <small>ENG-101</small>
-                      <b>Functional English</b>
-                      <i>CS · SE · BBA</i>
-                    </div>
-                    <div className="mini-class mint">
-                      <small>CS-301</small>
-                      <b>Database Systems</b>
-                      <i>CS · SE</i>
-                    </div>
-                    <div />
-                    <span>10:00</span>
-                    <div className="mini-class peach">
-                      <small>MTH-101</small>
-                      <b>Quantitative Reasoning</b>
-                      <i>CS · BBA</i>
-                    </div>
-                    <div />
-                    <div className="mini-class lavender">
-                      <small>ENG-101</small>
-                      <b>Functional English</b>
-                      <i>CS · SE · BBA</i>
-                    </div>
-                    <span>12:30</span>
-                    <div />
-                    <div className="mini-class rose">
-                      <small>CS-101L</small>
-                      <b>Programming Lab</b>
-                      <i>Computer Lab 1</i>
-                    </div>
-                    <div className="mini-class mint">
-                      <small>CS-301</small>
-                      <b>Database Systems</b>
-                      <i>CS · SE</i>
-                    </div>
-                  </div>
-                  <div className="preview-card-foot">
-                    <CheckCircle2 size={14} />
-                    Clash-free by design<span>Made for UOR</span>
-                  </div>
-                </div>
-                <div className="floating-badge">
-                  <ShieldCheck size={22} />
-                  <div>
-                    <strong>Never lose your progress</strong>
-                    <small>Automatic saves. Peace of mind.</small>
-                  </div>
-                </div>
-              </div>
-              <div className="welcome-features">
-                <div>
-                  <span className="avatar color-0">
-                    <Sparkles size={20} />
-                  </span>
-                  <h3>Plan intelligently</h3>
-                  <p>
-                    Generate around real availability and shared teaching
-                    groups.
-                  </p>
-                </div>
-                <div>
-                  <span className="avatar color-1">
-                    <CalendarDays size={20} />
-                  </span>
-                  <h3>Make it your own</h3>
-                  <p>
-                    Edit, drag, swap, and lock classes as your university needs.
-                  </p>
-                </div>
-                <div>
-                  <span className="avatar color-2">
-                    <FileDown size={20} />
-                  </span>
-                  <h3>Ready to share</h3>
-                  <p>
-                    Export polished PDFs and Excel files for every department.
-                  </p>
-                </div>
-              </div>
-            </section>
-          ) : (
-            <div className="page-content">
-              {page === "timetable" && (
-                <TimetablePanel
-                  key={p.id + state.formsEpoch}
-                  initialSessionId={inspected}
-                  project={p}
-                  filter={filter}
-                  onFilter={setFilter}
-                  onChange={state.update}
-                  onGenerate={generate}
-                  readOnly={state.readOnly}
-                  issues={issues}
-                  onError={state.setError}
-                />
-              )}{" "}
-              {["departments", "subjects", "teachers", "rooms"].includes(
-                page,
-              ) && (
-                <DataPanel
-                  key={page + p.id + state.formsEpoch}
-                  kind={
-                    page as "departments" | "subjects" | "teachers" | "rooms"
-                  }
-                  project={p}
-                  onChange={state.update}
-                  readOnly={state.readOnly}
-                  onError={state.setError}
-                />
-              )}{" "}
-              {page === "settings" && (
-                <SettingsPanel
-                  key={p.id + state.formsEpoch}
-                  project={p}
-                  onChange={state.update}
-                  readOnly={state.readOnly}
-                  onError={state.setError}
-                />
-              )}{" "}
-              {page === "issues" && (
-                <IssuesPanel
-                  project={p}
-                  issues={issues}
-                  onInspect={(id) => {
-                    setInspected(id);
-                    setFilter({});
-                    setPage("timetable");
-                  }}
-                />
-              )}{" "}
-              {page === "workload" && <WorkloadPanel project={p} />}
-              <footer className="page-footer">
-                <span>
-                  UNIVERSITY OF RAWALPINDI <span className="separator">/</span>{" "}
-                  TIMETABLE STUDIO
-                </span>
-                <div>
-                  <button
-                    onClick={() => input.current?.click()}
-                    disabled={state.readOnly}
-                  >
-                    Import backup
-                  </button>
-                  <button
-                    onClick={() => setFresh(true)}
-                    disabled={state.readOnly}
-                  >
-                    New project
-                  </button>
-                  <button onClick={state.restore} disabled={state.readOnly}>
-                    Restore previous snapshot
-                  </button>
-                </div>
-              </footer>
-            </div>
-          )}
+            )}
+            {page === "dashboard" && (
+              <Dashboard
+                project={p}
+                issues={issues}
+                readOnly={state.readOnly}
+                onNavigate={navigate}
+                onGenerate={generate}
+                onBackup={backup}
+              />
+            )}
+            {page === "timetable" && (
+              <TimetablePanel
+                key={p.id + state.formsEpoch}
+                initialSessionId={inspected}
+                project={p}
+                filter={filter}
+                onFilter={setFilter}
+                onChange={state.update}
+                onGenerate={generate}
+                readOnly={state.readOnly}
+                issues={issues}
+                onError={state.setError}
+              />
+            )}{" "}
+            {["departments", "subjects", "teachers", "rooms"].includes(
+              page,
+            ) && (
+              <DataPanel
+                key={page + p.id + state.formsEpoch}
+                kind={page as "departments" | "subjects" | "teachers" | "rooms"}
+                project={p}
+                onChange={state.update}
+                readOnly={state.readOnly}
+                onError={state.setError}
+              />
+            )}{" "}
+            {page === "settings" && (
+              <SettingsPanel
+                onLoadSample={() => setSample(true)}
+                onImport={() => input.current?.click()}
+                onReset={() => setFresh(true)}
+                onRestore={state.restore}
+                key={p.id + state.formsEpoch}
+                project={p}
+                onChange={state.update}
+                readOnly={state.readOnly}
+                onError={state.setError}
+              />
+            )}{" "}
+            {page === "issues" && (
+              <IssuesPanel
+                project={p}
+                issues={issues}
+                onInspect={(id) => {
+                  setInspected(id);
+                  setFilter({});
+                  setPage("timetable");
+                }}
+              />
+            )}{" "}
+            {page === "workload" && <WorkloadPanel project={p} />}
+          </div>
         </main>
       </div>
       {state.error && (
@@ -605,12 +462,12 @@ export default function App() {
         </div>
       )}
       {generating && (
-        <Modal title="Building a better week" onClose={cancel}>
+        <Modal title="Generating timetable" onClose={cancel}>
           <div className="generation-wait">
             <div className="generation-orbit">
               <Sparkles size={30} />
             </div>
-            <h3>Finding the right fit for every class</h3>
+            <h3>Scheduling university classes</h3>
             <p>
               Checking teacher availability, shared groups, rooms, and locked
               classes.
@@ -785,7 +642,7 @@ export default function App() {
         >
           <div className="modal-body">
             <p className="muted">
-              A polished timetable, ready for the people who need it.
+              Choose a format and the timetable data to export.
             </p>
             <div className="export-options">
               {(["pdf", "xlsx"] as const).map((f) => (
@@ -889,8 +746,8 @@ export default function App() {
       )}
       {fresh && (
         <Confirm
-          title="Start a new timetable?"
-          action="Start new timetable"
+          title="Reset this workspace?"
+          action="Reset workspace"
           onClose={() => setFresh(false)}
           onConfirm={() => {
             void state.start();
@@ -902,6 +759,25 @@ export default function App() {
           <p>
             Your current project will be retained as a recovery snapshot. Export
             a backup if you want to keep a separate copy.
+          </p>
+        </Confirm>
+      )}
+      {sample && (
+        <Confirm
+          title="Load sample data?"
+          action="Replace with sample data"
+          onClose={() => setSample(false)}
+          onConfirm={() => {
+            void state.start(sampleProject());
+            setSample(false);
+            setPage("timetable");
+            setFilter({});
+          }}
+        >
+          <p>
+            This replaces the current workspace with fictional sample
+            departments, subjects, teachers, and rooms. Your current saved
+            workspace is retained as a recovery snapshot.
           </p>
         </Confirm>
       )}

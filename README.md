@@ -15,7 +15,7 @@ Open the Local URL printed by Vite. If Windows blocks `npm.ps1`, use `npm.cmd`. 
 
 ## Prepare a timetable
 
-1. Start a new project, or explicitly choose the synthetic sample project to explore.
+1. Open the application directly into Dashboard. Use its setup shortcuts or the sidebar; no project-start screen is required. Optional fictional sample data is available under **Settings → Workspace data → Load sample data**, with replacement confirmation.
 2. Set teaching days, semesters, time slots/breaks, room types, and combining limits in Settings. The supplied defaults are editable examples, not university policy.
 3. Add departments. Under Subjects, select a semester and enter each department's subject offerings, weekly class count, and required room type. Reusing a university-wide subject code reuses the catalog subject.
 4. Review automatically detected Shared subjects. Enable combining only where permitted and set maximum groups if needed.
@@ -28,7 +28,7 @@ Combined classes appear once and retain all attending groups. Their teacher work
 
 ## Saving and backups
 
-Applied edits save automatically to IndexedDB. Unfinished forms have local drafts, scoped to the project. Reopening offers Resume previous work. New/imported projects archive the previous saved project; Restore previous snapshot can recover it. Undo/redo is available during the current session.
+Applied edits save automatically to IndexedDB. Unfinished forms have local drafts, scoped to the project and tab. Reopening automatically restores the saved workspace and last selected view. Older drafts require review when newer changes exist. Settings contains Import backup, Restore previous snapshot, Load sample data, and Reset workspace; replacing/resetting data retains a recovery snapshot. Undo/redo is available during the current session.
 
 Data belongs to the browser profile and website origin. Other computers do not see it. Clearing site data, private browsing, or changing the hosting URL may remove access to saved work. Download JSON backups regularly and use Import backup to move work. PDFs and spreadsheets cannot be imported as projects. Backups contain university scheduling data and should be handled accordingly.
 
