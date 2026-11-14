@@ -50,8 +50,6 @@ export function findIssues(p: Project): Issue[] {
         `${label(s)} requires ${g.roomType}; ${r.name} is ${r.type}`,
         [s.id],
       );
-    if (slot.isBreak)
-      add("break", `${label(s)} is scheduled during a break`, [s.id]);
   }
   for (let i = 0; i < p.sessions.length; i++)
     for (let j = i + 1; j < p.sessions.length; j++) {

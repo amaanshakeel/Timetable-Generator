@@ -3,6 +3,16 @@ import { fixture } from "../fixture";
 import { generateCandidate } from "../../src/scheduler/search";
 import { findIssues } from "../../src/domain/issues";
 import { validateProject } from "../../src/domain/validation";
+it("preserves manually locked break classes while generating new classes only in teaching slots", () => {
+  const p = fixture();
+  p.sessions[0].slotId = "p3";
+  p.sessions[0].locked = true;
+  const r = generateCandidate(p, { budgetMs: 150 });
+  expect(r.sessions.find((s) => s.id === "s1")?.slotId).toBe("p3");
+  expect(
+    r.sessions.filter((s) => !s.locked).every((s) => s.slotId !== "p3"),
+  ).toBe(true);
+});
 it("can complete a partially generated group after locking its only placed session", () => {
   const p = fixture();
   p.sessions = [];

@@ -1537,6 +1537,42 @@ hr {
   color: #bec3d1;
   writing-mode: vertical-rl;
   letter-spacing: 1px;
+  pointer-events: none;
+}
+.merged-break-cell {
+  vertical-align: middle;
+}
+.merged-break-target {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #7e8bb5;
+}
+.merged-break-target:disabled {
+  pointer-events: none;
+  opacity: 1;
+  cursor: default;
+}
+.merged-break-target:not(:disabled) {
+  outline: 1px dashed #9eabcf;
+  outline-offset: -4px;
+  background: #eaf0ff55;
+}
+.merged-break-target small {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  font-size: 9px;
+}
+.availability-break {
+  display: block;
+  font-size: 8px;
+  color: #a0a7b9;
+  margin-top: 3px;
 }
 .class-card {
   display: block;

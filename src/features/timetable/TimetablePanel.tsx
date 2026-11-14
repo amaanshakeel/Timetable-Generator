@@ -25,6 +25,7 @@ import {
   selectSessions,
   moveSession,
   swapSessions,
+  emptyBreakSlotIds,
 } from "../../domain/editing";
 import { groupLabel } from "../../domain/issues";
 import { Modal, Form, Field, Empty, useDraft } from "../../components/ui";
@@ -58,6 +59,11 @@ export function TimetablePanel({
     [dragging, setDragging] = useState<string | null>(null),
     [target, setTarget] = useState<string | null>(null),
     [moving, setMoving] = useState<string | null>(null),
+    [breakMove, setBreakMove] = useState<{
+      source: string;
+      dayId: string;
+      slotId: string;
+    } | null>(null),
     [choice, setChoice] = useState<{
       source: string;
       ids: string[];
@@ -66,6 +72,30 @@ export function TimetablePanel({
   const sessions = selectSessions(p, filter),
     warned = new Set(issues.flatMap((i) => i.sessionIds));
   const activeDay = p.settings.days.includes(day) ? day : p.settings.days[0];
+  const mergedBreakSlots = emptyBreakSlotIds(p, activeDay);
+  function dropIntoBreak(
+    e: React.DragEvent<HTMLTableCellElement>,
+    slotId: string,
+  ) {
+    e.preventDefault();
+    if (readOnly) return;
+    const id = e.dataTransfer.getData("text/plain");
+    if (!id) return;
+    const rows = Array.from(
+      e.currentTarget
+        .closest("table")!
+        .querySelectorAll<HTMLTableRowElement>("tbody tr[data-room-id]"),
+    );
+    const row = rows.find((row) => {
+      const rect = row.getBoundingClientRect();
+      return e.clientY >= rect.top && e.clientY < rect.bottom;
+    });
+    place(id, {
+      dayId: activeDay,
+      slotId,
+      roomId: row?.dataset.roomId || p.rooms[0].id,
+    });
+  }
   const subject = (s: Session) =>
     p.subjects.find(
       (x) =>
@@ -278,8 +308,8 @@ export function TimetablePanel({
                   <col
                     key={s.id}
                     style={{
-                      minWidth: s.isBreak ? 85 : 190,
-                      width: s.isBreak ? 85 : 210,
+                      minWidth: mergedBreakSlots.has(s.id) ? 85 : 190,
+                      width: mergedBreakSlots.has(s.id) ? 85 : 210,
                     }}
                   />
                 ))}
@@ -307,13 +337,47 @@ export function TimetablePanel({
                 </tr>
               </thead>
               <tbody>
-                {visibleRooms.map((room) => (
-                  <tr key={room.id}>
+                {visibleRooms.map((room, roomIndex) => (
+                  <tr key={room.id} data-room-id={room.id}>
                     <th>
                       <strong>{room.name}</strong>
                       <span>{room.type}</span>
                     </th>
                     {p.settings.slots.map((slot) => {
+                      if (mergedBreakSlots.has(slot.id))
+                        return roomIndex === 0 ? (
+                          <td
+                            key={slot.id}
+                            rowSpan={visibleRooms.length}
+                            data-break-slot={slot.id}
+                            className={`break-cell merged-break-cell ${target === `break-${slot.id}` ? "drop-target" : ""}`}
+                            onDragOver={(e) => {
+                              if (!readOnly) {
+                                e.preventDefault();
+                                setTarget(`break-${slot.id}`);
+                              }
+                            }}
+                            onDragLeave={() => setTarget(null)}
+                            onDrop={(e) => dropIntoBreak(e, slot.id)}
+                          >
+                            <span className="break-label">Break</span>
+                            <button
+                              className="merged-break-target"
+                              disabled={!moving || readOnly}
+                              aria-label={`Move class into break ${slot.start} ${slot.end}`}
+                              onClick={() =>
+                                moving &&
+                                setBreakMove({
+                                  source: moving,
+                                  slotId: slot.id,
+                                  dayId: activeDay,
+                                })
+                              }
+                            >
+                              {moving && <small>Choose room</small>}
+                            </button>
+                          </td>
+                        ) : null;
                       const to = {
                           dayId: activeDay,
                           slotId: slot.id,
@@ -343,100 +407,91 @@ export function TimetablePanel({
                             if (id && !readOnly) place(id, to);
                           }}
                         >
-                          {slot.isBreak && !ss.length ? (
-                            <span className="break-label">Take a break</span>
-                          ) : (
-                            <>
-                              {ss.map((s) => {
-                                const sub = subject(s),
-                                  color = subjectColor(sub?.code || ""),
-                                  warnings = issues.filter((i) =>
-                                    i.sessionIds.includes(s.id),
-                                  );
-                                return (
-                                  <button
-                                    data-session={s.id}
-                                    key={s.id}
-                                    className={`class-card ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
-                                    style={
-                                      {
-                                        "--card-color": color,
-                                      } as React.CSSProperties
-                                    }
-                                    draggable={!readOnly && !s.locked}
-                                    onDragStart={(e) => {
-                                      e.dataTransfer.setData(
-                                        "text/plain",
-                                        s.id,
-                                      );
-                                      setDragging(s.id);
-                                    }}
-                                    onDragEnd={() => {
-                                      setDragging(null);
-                                      setTarget(null);
-                                    }}
-                                    onClick={() =>
-                                      moving
-                                        ? place(moving, to)
-                                        : setEditing(s.id)
-                                    }
-                                    aria-label={`${sub?.name}, ${p.teachers.find((t) => t.id === s.teacherId)?.name}, ${groupLabel(p, s.teachingGroupId)}`}
-                                    title={
-                                      warnings.length
-                                        ? warnings
-                                            .map((i) => i.message)
-                                            .join("\n")
-                                        : "Click to edit · drag to move or swap"
-                                    }
-                                  >
-                                    <div className="class-card-top">
-                                      <span>{sub?.code}</span>
-                                      <div>
-                                        {s.locked ? (
-                                          <LockKeyhole size={13} />
-                                        ) : (
-                                          <GripVertical size={13} />
-                                        )}{" "}
-                                        {!!warnings.length && (
-                                          <TriangleAlert size={14} />
-                                        )}
-                                      </div>
-                                    </div>
-                                    <strong>{sub?.name}</strong>
-                                    <span className="class-groups">
-                                      {groupLabel(p, s.teachingGroupId)}
-                                    </span>
-                                    <span className="class-teacher">
-                                      {
-                                        p.teachers.find(
-                                          (t) => t.id === s.teacherId,
-                                        )?.name
-                                      }
-                                    </span>
-                                    {s.note && (
-                                      <span className="class-note">
-                                        {s.note}
-                                      </span>
-                                    )}
-                                  </button>
+                          <>
+                            {ss.map((s) => {
+                              const sub = subject(s),
+                                color = subjectColor(sub?.code || ""),
+                                warnings = issues.filter((i) =>
+                                  i.sessionIds.includes(s.id),
                                 );
-                              })}
-                              {!ss.length && (
+                              return (
                                 <button
-                                  className="empty-cell"
-                                  disabled={!moving || readOnly}
-                                  onClick={() => moving && place(moving, to)}
-                                  aria-label={`Move to ${room.name} ${activeDay} ${slot.start}`}
+                                  data-session={s.id}
+                                  key={s.id}
+                                  className={`class-card ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
+                                  style={
+                                    {
+                                      "--card-color": color,
+                                    } as React.CSSProperties
+                                  }
+                                  draggable={!readOnly && !s.locked}
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.setData("text/plain", s.id);
+                                    setDragging(s.id);
+                                  }}
+                                  onDragEnd={() => {
+                                    setDragging(null);
+                                    setTarget(null);
+                                  }}
+                                  onClick={() =>
+                                    moving
+                                      ? place(moving, to)
+                                      : setEditing(s.id)
+                                  }
+                                  aria-label={`${sub?.name}, ${p.teachers.find((t) => t.id === s.teacherId)?.name}, ${groupLabel(p, s.teachingGroupId)}`}
+                                  title={
+                                    warnings.length
+                                      ? warnings
+                                          .map((i) => i.message)
+                                          .join("\n")
+                                      : "Click to edit · drag to move or swap"
+                                  }
                                 >
-                                  {moving ? (
-                                    <ArrowUpRight size={20} />
-                                  ) : (
-                                    <span>—</span>
+                                  <div className="class-card-top">
+                                    <span>{sub?.code}</span>
+                                    <div>
+                                      {s.locked ? (
+                                        <LockKeyhole size={13} />
+                                      ) : (
+                                        <GripVertical size={13} />
+                                      )}{" "}
+                                      {!!warnings.length && (
+                                        <TriangleAlert size={14} />
+                                      )}
+                                    </div>
+                                  </div>
+                                  <strong>{sub?.name}</strong>
+                                  <span className="class-groups">
+                                    {groupLabel(p, s.teachingGroupId)}
+                                  </span>
+                                  <span className="class-teacher">
+                                    {
+                                      p.teachers.find(
+                                        (t) => t.id === s.teacherId,
+                                      )?.name
+                                    }
+                                  </span>
+                                  {s.note && (
+                                    <span className="class-note">{s.note}</span>
                                   )}
                                 </button>
-                              )}
-                            </>
-                          )}
+                              );
+                            })}
+                            {!ss.length && (
+                              <button
+                                className="empty-cell"
+                                disabled={!moving || readOnly}
+                                onClick={() => moving && place(moving, to)}
+                                aria-label={`Move to ${room.name} ${activeDay} ${slot.start}`}
+                              >
+                                {moving ? (
+                                  <ArrowUpRight size={20} />
+                                ) : (
+                                  <span>—</span>
+                                )}
+                              </button>
+                            )}
+                          </>
                         </td>
                       );
                     })}
@@ -534,6 +589,33 @@ export function TimetablePanel({
             >
               Move here without swapping (may create warnings)
             </button>
+          </div>
+        </Modal>
+      )}
+      {breakMove && (
+        <Modal
+          title="Choose a room for this break slot"
+          onClose={() => setBreakMove(null)}
+        >
+          <div className="modal-body">
+            <p className="muted small">Select the room to use for the class.</p>
+            {p.rooms.map((room) => (
+              <button
+                className="choice-row"
+                key={room.id}
+                onClick={() => {
+                  place(breakMove.source, {
+                    roomId: room.id,
+                    dayId: breakMove.dayId,
+                    slotId: breakMove.slotId,
+                  });
+                  setBreakMove(null);
+                }}
+              >
+                {room.name}
+                <span>{room.type}</span>
+              </button>
+            ))}
           </div>
         </Modal>
       )}

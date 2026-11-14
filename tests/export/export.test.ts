@@ -5,6 +5,26 @@ import {
   createWorkbook,
   pdfDefinition,
 } from "../../src/export/exports";
+it("merges empty break columns in exports and keeps occupied break columns separate", async () => {
+  const p = fixture();
+  const model = buildExportModel(p, "university", {});
+  const doc = pdfDefinition(model);
+  const table = (
+    doc.content as { table?: { body: Record<string, unknown>[][] } }[]
+  ).find((x) => x.table)!.table!;
+  expect(table.body[1][3].rowSpan).toBe(2);
+  const wb = await createWorkbook(model);
+  expect(wb.getWorksheet("Mon")?.getCell("D6").isMerged).toBe(true);
+  expect(wb.getWorksheet("Mon")?.getCell("D5").alignment?.textRotation).toBe(
+    90,
+  );
+  p.sessions[0].slotId = "p3";
+  const occupied = await createWorkbook(buildExportModel(p, "university", {}));
+  expect(occupied.getWorksheet("Mon")?.getCell("D6").isMerged).toBe(false);
+  expect(String(occupied.getWorksheet("Mon")?.getCell("D5").value)).toContain(
+    "English",
+  );
+});
 it("splits long wrapped cells into printable continuation rows without losing text", async () => {
   const p = fixture();
   const note = "Long-Unbroken-Notes-".repeat(140);

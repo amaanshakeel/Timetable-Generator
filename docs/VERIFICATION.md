@@ -46,3 +46,11 @@ An initial browser test for queued saves relied on modifying a dynamically impor
 - GitHub Pages publication cannot be verified until the university's destination repository/account is selected. The workflow and deployment instructions are ready.
 
 No unresolved Critical or Important review finding remains. There are no deferred Minor review findings.
+
+## Manual break placement update — 2026-11-14
+
+Classes can be edited or moved into break slots, including drag and click-to-move. Ordinary availability and clash checks still apply. Automatic generation continues to avoid breaks for new placements and retains locked manual break placements.
+
+An entirely empty break column merges across room rows and displays a vertical Break label. Occupied break columns use normal editable cells. Emptiness is checked across the full day's timetable, including classes hidden by filters. PDF and Excel exports follow the same rule.
+
+Validation: TypeScript passed, all 29 unit/integration tests and 16 browser workflows passed, and the production build passed. Review found no material regression. Rendered PDF pages 1 and 2 were inspected: the merged column spans room rows and page continuation without internal room borders, and the long note continues legibly.

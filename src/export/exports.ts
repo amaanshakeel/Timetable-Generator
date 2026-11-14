@@ -1,4 +1,4 @@
-import { selectSessions } from "../domain/editing";
+import { selectSessions, emptyBreakSlotIds } from "../domain/editing";
 import { findIssues, groupLabel } from "../domain/issues";
 import type { Project, TimetableFilter } from "../domain/types";
 import type {
@@ -55,6 +55,7 @@ export function pdfDefinition(
     chunks.push(p.settings.slots.slice(i, i + 5));
   for (const day of p.settings.days)
     for (const [chunkIndex, slots] of chunks.entries()) {
+      const mergedBreakSlots = emptyBreakSlotIds(p, day);
       if (content.length) content.push({ text: "", pageBreak: "before" });
       if (logo)
         content.push({ image: logo, width: 190, margin: [0, 0, 0, 12] });
@@ -90,10 +91,19 @@ export function pdfDefinition(
       const body: TableCell[][] = [
         header,
         ...p.rooms.map(
-          (room) =>
+          (room, roomIndex) =>
             [
               { text: room.name, bold: true, fillColor: "#f2f4f9" },
               ...slots.map((slot) => {
+                if (mergedBreakSlots.has(slot.id))
+                  return roomIndex === 0
+                    ? {
+                        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="70"><text x="10" y="35" transform="rotate(-90 10 35)" text-anchor="middle" font-family="Roboto" font-size="10" fill="#858b99">Break</text></svg>',
+                        rowSpan: p.rooms.length,
+                        alignment: "center",
+                        fillColor: "#f4f5f8",
+                      }
+                    : {};
                 const rows = model.rows.filter(
                   (r) =>
                     r.day === day &&
@@ -102,7 +112,7 @@ export function pdfDefinition(
                 );
                 if (!rows.length)
                   return {
-                    text: slot.isBreak ? "Break" : "",
+                    text: "",
                     fillColor: slot.isBreak ? "#f4f5f8" : "#ffffff",
                   };
                 return {
@@ -248,18 +258,16 @@ export async function createWorkbook(model: ExportModel, logo?: string) {
     for (const room of model.project.rooms) {
       const values = [
         room.name,
-        ...slots.map(
-          (s) =>
-            model.rows
-              .filter(
-                (r) =>
-                  r.day === day && r.roomId === room.id && r.slotId === s.id,
-              )
-              .map(
-                (r) =>
-                  `${r.subject}\n${r.code}\n${r.groups}\n${r.teacher}${r.note ? `\n${r.note}` : ""}${r.locked ? "\n[Locked]" : ""}`,
-              )
-              .join("\n\n") || (s.isBreak ? "Break" : ""),
+        ...slots.map((s) =>
+          model.rows
+            .filter(
+              (r) => r.day === day && r.roomId === room.id && r.slotId === s.id,
+            )
+            .map(
+              (r) =>
+                `${r.subject}\n${r.code}\n${r.groups}\n${r.teacher}${r.note ? `\n${r.note}` : ""}${r.locked ? "\n[Locked]" : ""}`,
+            )
+            .join("\n\n"),
         ),
       ];
       const wrapped = values.map((v, i) => wrapForExcel(v, i === 0 ? 16 : 26));
@@ -304,6 +312,25 @@ export async function createWorkbook(model: ExportModel, logo?: string) {
               fgColor: { argb: red },
             };
         });
+      }
+    }
+    for (const slotId of emptyBreakSlotIds(model.project, day)) {
+      const col = slots.findIndex((s) => s.id === slotId) + 2;
+      if (ws.rowCount >= 5) {
+        ws.mergeCells(5, col, ws.rowCount, col);
+        const cell = ws.getCell(5, col);
+        cell.value = "Break";
+        cell.font = { name: "Arial", size: 11, color: { argb: "FF858B99" } };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          textRotation: 90,
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF4F5F8" },
+        };
       }
     }
     ws.views = [{ state: "frozen", xSplit: 1, ySplit: 4 }];

@@ -8,6 +8,14 @@ import {
   selectSessions,
 } from "../../src/domain/editing";
 describe("project integrity", () => {
+  it("allows manual placements in break slots without a break warning while retaining conflict checks", () => {
+    const p = fixture();
+    p.sessions[0].slotId = "p3";
+    expect(findIssues(p).some((i) => i.kind === "break")).toBe(false);
+    p.sessions[1].dayId = "Mon";
+    p.sessions[1].slotId = "p3";
+    expect(findIssues(p).some((i) => i.kind === "teacher")).toBe(true);
+  });
   it("rejects duplicate offering membership inside a teaching group", () => {
     const p = fixture();
     p.teachingGroups[0].offeringIds = ["o1", "o1"];

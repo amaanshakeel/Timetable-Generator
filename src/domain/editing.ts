@@ -1,4 +1,15 @@
 import type { Project, Placement, TimetableFilter } from "./types";
+export function emptyBreakSlotIds(p: Project, dayId: string) {
+  return new Set(
+    p.settings.slots
+      .filter(
+        (slot) =>
+          slot.isBreak &&
+          !p.sessions.some((s) => s.dayId === dayId && s.slotId === slot.id),
+      )
+      .map((slot) => slot.id),
+  );
+}
 export function selectSessions(p: Project, filter: TimetableFilter) {
   if (!filter.departmentId && !filter.semester) return p.sessions;
   const ids = new Set(

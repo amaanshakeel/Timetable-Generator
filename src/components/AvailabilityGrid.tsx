@@ -12,7 +12,7 @@ export function AvailabilityGrid({
   value: Availability;
   onChange: (v: Availability) => void;
 }) {
-  const slots = settings.slots.filter((s) => !s.isBreak);
+  const slots = settings.slots;
   return (
     <div className="availability">
       <div className="radio-options">
@@ -58,6 +58,9 @@ export function AvailabilityGrid({
                 {s.start}
                 <br />
                 {s.end}
+                {s.isBreak && (
+                  <small className="availability-break">Break</small>
+                )}
               </span>
             ))}
             {settings.days.map((d) => (
