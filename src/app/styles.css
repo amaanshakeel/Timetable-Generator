@@ -3058,7 +3058,14 @@ hr {
   margin: 0;
 }
 
+.issue-row > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .issue-action {
+  margin-left: auto;
+  flex-shrink: 0;
   align-self: start;
   white-space: nowrap;
 }
