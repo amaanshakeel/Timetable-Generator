@@ -3038,3 +3038,22 @@ hr {
     padding: 9px 0;
   }
 }
+
+.department-semesters {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 18px 0;
+  padding: 12px;
+}
+.department-semesters legend {
+  font-weight: 600;
+  color: var(--navy);
+}
+.semester-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.semester-options .picker-option {
+  margin: 0;
+}

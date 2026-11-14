@@ -17,7 +17,7 @@ Open the Local URL printed by Vite. If Windows blocks `npm.ps1`, use `npm.cmd`. 
 
 1. Open the application directly into Dashboard. Use its setup shortcuts or the sidebar; no project-start screen is required. Optional fictional sample data is available under **Settings → Workspace data → Load sample data**, with replacement confirmation.
 2. Set teaching days, semesters, time slots/breaks, room types, and combining limits in Settings. The supplied defaults are editable examples, not university policy.
-3. Add departments. Under Subjects, select a semester and enter each department's subject offerings, weekly class count, and required room type. Reusing a university-wide subject code reuses the catalog subject.
+3. Add departments and select their semesters (multiple selections are allowed). The last saved semester selection is reused for the next department. Under Subjects, select a semester and enter each department's subject offerings, weekly class count, and required room type. Reusing a university-wide subject code reuses the catalog subject.
 4. Review automatically detected Shared subjects. Enable combining only where permitted and set maximum groups if needed.
 5. Add teachers, select eligible subjects from the searchable department-semester categories, and set availability. Add rooms with types and availability.
 6. Generate, review the proposed assignments and workload changes, then apply. Incomplete results explain unplaced requirements. Locks are preserved.

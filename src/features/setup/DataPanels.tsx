@@ -20,6 +20,7 @@ import {
   type Subject,
   type Department,
   uid,
+  departmentSemesters,
 } from "../../domain/types";
 import { validateProject } from "../../domain/validation";
 import {
@@ -65,6 +66,27 @@ export function DataPanel({
     [remove, setRemove] = useState<string | null>(null),
     [semester, setSemester] = useState(1),
     [department, setDepartment] = useState("");
+  const preferenceKey = "uor-department-semesters-" + p.id;
+  const [lastSemesters, setLastSemesters] = useState<number[]>(() => {
+    try {
+      const saved: unknown = JSON.parse(
+        localStorage.getItem(preferenceKey) || "null",
+      );
+      if (Array.isArray(saved)) {
+        const valid = saved.filter(
+          (n): n is number =>
+            Number.isInteger(n) && n >= 1 && n <= p.settings.semesterCount,
+        );
+        if (valid.length) return [...new Set(valid)];
+      }
+    } catch {
+      /* A preference must never prevent opening a workspace. */
+    }
+    return [1];
+  });
+  const availableDepartments = p.departments.filter((d) =>
+    departmentSemesters(p, d).includes(semester),
+  );
   const matches = (text: string) =>
     text.toLowerCase().includes(search.toLowerCase());
   const subject = (id: string) => p.subjects.find((s) => s.id === id);
@@ -187,7 +209,18 @@ export function DataPanel({
               <select
                 aria-label="Offering semester"
                 value={semester}
-                onChange={(e) => setSemester(+e.target.value)}
+                onChange={(e) => {
+                  const nextSemester = +e.target.value;
+                  setSemester(nextSemester);
+                  if (
+                    !p.departments.some(
+                      (d) =>
+                        d.id === department &&
+                        departmentSemesters(p, d).includes(nextSemester),
+                    )
+                  )
+                    setDepartment("");
+                }}
               >
                 {Array.from({ length: p.settings.semesterCount }, (_, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -201,7 +234,7 @@ export function DataPanel({
                 onChange={(e) => setDepartment(e.target.value)}
               >
                 <option value="">All departments</option>
-                {p.departments.map((d) => (
+                {availableDepartments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.code}
                   </option>
@@ -242,13 +275,9 @@ export function DataPanel({
                         <span className="badge">{d.code}</span>
                       </td>
                       <td>
-                        {
-                          new Set(
-                            p.offerings
-                              .filter((o) => o.departmentId === d.id)
-                              .map((o) => o.semester),
-                          ).size
-                        }
+                        {departmentSemesters(p, d)
+                          .map((n) => `Semester ${n}`)
+                          .join(", ") || "No active semesters"}
                       </td>
                       <td>
                         {
@@ -515,17 +544,31 @@ export function DataPanel({
         <DepartmentEditor
           projectId={p.id}
           revision={p.revision}
+          semesterCount={p.settings.semesterCount}
+          defaultSemesters={lastSemesters}
           value={p.departments.find((d) => d.id === edit)}
           onClose={() => setEdit(null)}
-          onSave={(value) =>
-            save({
+          onSave={(value) => {
+            const error = save({
               ...p,
               departments:
                 edit === "new"
                   ? [...p.departments, value]
                   : p.departments.map((d) => (d.id === edit ? value : d)),
-            })
-          }
+            });
+            if (!error && value.semesters) {
+              setLastSemesters(value.semesters);
+              try {
+                localStorage.setItem(
+                  preferenceKey,
+                  JSON.stringify(value.semesters),
+                );
+              } catch {
+                /* Keep the selection in memory when storage is unavailable. */
+              }
+            }
+            return error;
+          }}
         />
       )}
       {edit && kind === "subjects" && (
@@ -579,21 +622,38 @@ export function DataPanel({
 function DepartmentEditor({
   projectId,
   revision,
+  semesterCount,
+  defaultSemesters,
   value,
   onSave,
   onClose,
 }: {
   projectId: string;
   revision: number;
+  semesterCount: number;
+  defaultSemesters: number[];
   value?: Department;
   onSave: (v: Department) => string;
   onClose: () => void;
 }) {
   const [v, set, clear, draft] = useDraft(
     projectId + "-department-" + (value?.id || "new"),
-    value || { id: uid(), name: "", code: "" },
+    {
+      ...(value || { id: uid(), name: "", code: "" }),
+      semesters: value
+        ? (value.semesters ??
+          Array.from({ length: semesterCount }, (_, i) => i + 1))
+        : defaultSemesters,
+    },
     revision,
   );
+  // Drafts created before semester membership was added may omit this field.
+  const selectedSemesters =
+    v.semesters ??
+    (value
+      ? (value.semesters ??
+        Array.from({ length: semesterCount }, (_, i) => i + 1))
+      : defaultSemesters);
   const [error, setError] = useState("");
   return (
     <Modal
@@ -605,7 +665,11 @@ function DepartmentEditor({
         error={error}
         onSubmit={(e) => {
           e.preventDefault();
-          const error = onSave(v);
+          if (!selectedSemesters.length) {
+            setError("Select at least one semester for this department.");
+            return;
+          }
+          const error = onSave({ ...v, semesters: selectedSemesters });
           setError(error);
           if (!error) clear();
         }}
@@ -618,6 +682,32 @@ function DepartmentEditor({
             placeholder="Computer Science"
           />
         </Field>
+        <fieldset className="department-semesters">
+          <legend>Semesters</legend>
+          <p className="small muted">
+            Select every semester this department belongs to. Your selection is
+            reused for the next department.
+          </p>
+          <div className="semester-options">
+            {Array.from({ length: semesterCount }, (_, i) => i + 1).map((n) => (
+              <label key={n} className="picker-option">
+                <input
+                  type="checkbox"
+                  checked={selectedSemesters.includes(n)}
+                  onChange={(e) =>
+                    set({
+                      ...v,
+                      semesters: e.target.checked
+                        ? [...selectedSemesters, n].sort((a, b) => a - b)
+                        : selectedSemesters.filter((s) => s !== n),
+                    })
+                  }
+                />
+                <span>Semester {n}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <DraftNotice draft={draft} />
         <Field label="Department code">
           <input
@@ -653,7 +743,14 @@ function OfferingEditor({
       id: value?.id || uid(),
       subjectId: value?.subjectId || "",
       departmentId:
-        value?.departmentId || department || p.departments[0]?.id || "",
+        value?.departmentId ||
+        p.departments.find(
+          (d) =>
+            d.id === department && departmentSemesters(p, d).includes(semester),
+        )?.id ||
+        p.departments.find((d) => departmentSemesters(p, d).includes(semester))
+          ?.id ||
+        "",
       semester: value?.semester || semester,
       weeklyClasses: value?.weeklyClasses || 2,
       roomType: value?.roomType || p.settings.roomTypes[0],
@@ -833,7 +930,19 @@ function OfferingEditor({
           <Field label="Semester">
             <select
               value={v.semester}
-              onChange={(e) => set({ ...v, semester: +e.target.value })}
+              onChange={(e) => {
+                const nextSemester = +e.target.value;
+                const valid = p.departments.some(
+                  (d) =>
+                    d.id === v.departmentId &&
+                    departmentSemesters(p, d).includes(nextSemester),
+                );
+                set({
+                  ...v,
+                  semester: nextSemester,
+                  departmentId: valid ? v.departmentId : "",
+                });
+              }}
             >
               {Array.from({ length: p.settings.semesterCount }, (_, i) => (
                 <option value={i + 1} key={i + 1}>
@@ -851,11 +960,13 @@ function OfferingEditor({
               <option value="" disabled>
                 Select department
               </option>
-              {p.departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
+              {p.departments
+                .filter((d) => departmentSemesters(p, d).includes(v.semester))
+                .map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
             </select>
           </Field>
         </div>

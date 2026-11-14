@@ -8,6 +8,40 @@ import {
   selectSessions,
 } from "../../src/domain/editing";
 describe("project integrity", () => {
+  it("retains explicit department semesters in backups and rejects incompatible offerings", () => {
+    const p = fixture();
+    const input = {
+      ...p,
+      departments: p.departments.map((d) => ({ ...d, semesters: [1, 3] })),
+    };
+    const parsed = validateProject(input);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok)
+      expect(parsed.value.departments[0]).toHaveProperty("semesters", [1, 3]);
+    expect(
+      validateProject({
+        ...input,
+        departments: input.departments.map((d) => ({ ...d, semesters: [3] })),
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateProject({
+        ...input,
+        departments: input.departments.map((d) => ({
+          ...d,
+          semesters: [1, 1],
+        })),
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateProject({
+        ...input,
+        departments: input.departments.map((d) => ({ ...d, semesters: [99] })),
+      }).ok,
+    ).toBe(false);
+    expect(validateProject(p).ok).toBe(true);
+  });
+
   it("allows manual placements in break slots without a break warning while retaining conflict checks", () => {
     const p = fixture();
     p.sessions[0].slotId = "p3";

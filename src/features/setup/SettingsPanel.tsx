@@ -40,6 +40,12 @@ export function SettingsPanel({
   function prepare() {
     let next = structuredClone(p);
     next.settings = s;
+    next.departments = next.departments.map((d) => ({
+      ...d,
+      ...(d.semesters
+        ? { semesters: d.semesters.filter((n) => n <= s.semesterCount) }
+        : {}),
+    }));
     const removedOfferings = p.offerings
       .filter(
         (o) =>

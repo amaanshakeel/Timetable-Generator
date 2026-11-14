@@ -18,6 +18,7 @@ export interface Department {
   id: string;
   name: string;
   code: string;
+  semesters?: number[];
 }
 export interface Subject {
   id: string;
@@ -128,4 +129,15 @@ export function emptyProject(): Project {
     teachingGroups: [],
     sessions: [],
   };
+}
+
+// Missing memberships in older backups retain their original university-wide availability.
+export function departmentSemesters(
+  project: Project,
+  department: Department,
+): number[] {
+  return (
+    department.semesters ??
+    Array.from({ length: project.settings.semesterCount }, (_, i) => i + 1)
+  );
 }

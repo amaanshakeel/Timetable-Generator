@@ -24,7 +24,9 @@ const projectSchema = z.object({
     maxCombine: positive,
     roomTypes: z.array(name).min(1),
   }),
-  departments: z.array(z.object({ id, name, code: name })),
+  departments: z.array(
+    z.object({ id, name, code: name, semesters: z.array(positive).optional() }),
+  ),
   subjects: z.array(
     z.object({
       id,
@@ -119,6 +121,16 @@ export function validateProject(value: unknown): ValidationResult<Project> {
   }
   const has = (list: { id: string }[], key: string) =>
     list.some((x) => x.id === key);
+  for (const d of p.departments) {
+    if (
+      d.semesters &&
+      (new Set(d.semesters).size !== d.semesters.length ||
+        d.semesters.some((n) => n > p.settings.semesterCount))
+    )
+      return fail(
+        "Department semesters must be unique and within the configured semester range",
+      );
+  }
   const offeringKeys = new Set<string>();
   for (const o of p.offerings) {
     if (
@@ -128,6 +140,11 @@ export function validateProject(value: unknown): ValidationResult<Project> {
       !p.settings.roomTypes.includes(o.roomType)
     )
       return fail("An offering references missing setup data");
+    const department = p.departments.find((d) => d.id === o.departmentId)!;
+    if (department.semesters && !department.semesters.includes(o.semester))
+      return fail(
+        "A department must include every semester where it has subject offerings. Remove those offerings before removing the semester.",
+      );
     const key = `${o.departmentId}|${o.semester}|${o.subjectId}`;
     if (offeringKeys.has(key))
       return fail(
