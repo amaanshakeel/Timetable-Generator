@@ -279,7 +279,6 @@ export default function App() {
             <ArrowUpRight size={13} />
           </button>
           <div className="sidebar-foot">
-            <span className="uor-mark">U</span>
             <div>
               <strong>Student Affairs</strong>
               <small>Central scheduling team</small>
