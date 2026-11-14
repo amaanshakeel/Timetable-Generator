@@ -5,7 +5,7 @@ const id = z.string().min(1).max(200),
   positive = z.number().int().min(1).max(100);
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const availability = z.array(z.string()).nullable();
-const projectSchema = z.object({
+const baseProjectSchema = z.object({
   id: id.default(() => crypto.randomUUID()),
   schemaVersion: z.literal(1),
   revision: z.number().int().nonnegative(),
@@ -72,6 +72,14 @@ const projectSchema = z.object({
     }),
   ),
 });
+const savedTimetableSchema = baseProjectSchema
+  .omit({ id: true, schemaVersion: true, revision: true, savedAt: true })
+  .extend({ id, name });
+const projectSchema = baseProjectSchema.extend({
+  activeTimetableId: id.optional(),
+  timetableName: name.optional(),
+  savedTimetables: z.array(savedTimetableSchema).optional(),
+});
 export type ValidationResult<T> =
   { ok: true; value: T } | { ok: false; error: string };
 export const minutes = (time: string) => {
@@ -93,6 +101,35 @@ export function validateProject(value: unknown): ValidationResult<Project> {
     ok: false,
     error,
   });
+  if (
+    Boolean(p.activeTimetableId) !== Boolean(p.timetableName) ||
+    (p.savedTimetables?.length && !p.activeTimetableId)
+  )
+    return fail("Saved timetables require an active timetable ID and name");
+  const timetableIds = [
+    p.activeTimetableId || p.id,
+    ...(p.savedTimetables || []).map((t) => t.id),
+  ];
+  const timetableNames = [
+    p.timetableName || "Timetable 1",
+    ...(p.savedTimetables || []).map((t) => t.name),
+  ].map((n) => n.toLowerCase());
+  if (
+    new Set(timetableIds).size !== timetableIds.length ||
+    new Set(timetableNames).size !== timetableNames.length
+  )
+    return fail("Timetable IDs and names must be unique");
+  for (const saved of p.savedTimetables || []) {
+    const checked = validateProject({
+      ...saved,
+      id: p.id,
+      schemaVersion: 1,
+      revision: p.revision,
+      savedAt: p.savedAt,
+    });
+    if (!checked.ok)
+      return fail(`Saved timetable ${saved.name}: ${checked.error}`);
+  }
   for (const list of [
     p.departments,
     p.subjects,

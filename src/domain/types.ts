@@ -77,6 +77,9 @@ export interface Project {
   rooms: Room[];
   teachingGroups: TeachingGroup[];
   sessions: Session[];
+  activeTimetableId?: string;
+  timetableName?: string;
+  savedTimetables?: SavedTimetable[];
 }
 export interface Issue {
   id: string;
@@ -141,4 +144,20 @@ export function departmentSemesters(
     department.semesters ??
     Array.from({ length: project.settings.semesterCount }, (_, i) => i + 1)
   );
+}
+
+export type TimetableData = Pick<
+  Project,
+  | "settings"
+  | "departments"
+  | "subjects"
+  | "offerings"
+  | "teachers"
+  | "rooms"
+  | "teachingGroups"
+  | "sessions"
+>;
+export interface SavedTimetable extends TimetableData {
+  id: string;
+  name: string;
 }

@@ -68,7 +68,7 @@ export function pdfDefinition(
           margin: [0, 0, 0, 4],
         },
         {
-          text: `${p.settings.term} · ${day}${chunks.length > 1 ? ` · Slots ${chunkIndex * 5 + 1}–${chunkIndex * 5 + slots.length}` : ""}`,
+          text: `${p.settings.term}${p.timetableName ? ` - ${p.timetableName}` : ""} · ${day}${chunks.length > 1 ? ` · Slots ${chunkIndex * 5 + 1}–${chunkIndex * 5 + slots.length}` : ""}`,
           fontSize: 12,
           bold: true,
           margin: [0, 0, 0, 12],
@@ -188,7 +188,7 @@ export function pdfDefinition(
     pageSize: "LETTER",
     pageMargins: [28, 30, 28, 38],
     info: {
-      title: `${p.settings.university} — ${p.settings.term} timetable`,
+      title: `${p.settings.university} — ${p.settings.term}${p.timetableName ? ` - ${p.timetableName}` : ""} timetable`,
       author: p.settings.university,
     },
     defaultStyle: {
@@ -242,7 +242,8 @@ export async function createWorkbook(model: ExportModel, logo?: string) {
       ws.getCell(1, 1).alignment = { horizontal: "right", vertical: "middle" };
     }
     ws.mergeCells(2, 1, 2, columns);
-    ws.getCell(2, 1).value = `${model.project.settings.term} · ${day}`;
+    ws.getCell(2, 1).value =
+      `${model.project.settings.term}${model.project.timetableName ? ` - ${model.project.timetableName}` : ""} · ${day}`;
     ws.getRow(4).values = [
       "Room / venue",
       ...slots.map(
@@ -435,7 +436,7 @@ export async function exportFile(
 ) {
   const model = buildExportModel(project, scope, filter),
     logo = await loadLogo();
-  const filename = `UOR-${project.settings.term.replace(/[^\p{L}\p{N}-]/gu, "-")}-${scope}.${format}`;
+  const filename = `UOR-${project.settings.term.replace(/[^\p{L}\p{N}-]/gu, "-")}${project.timetableName ? `-${project.timetableName.replace(/[^\p{L}\p{N}-]/gu, "-")}` : ""}-${scope}.${format}`;
   if (format === "xlsx") {
     const wb = await createWorkbook(model, logo);
     const data = await wb.xlsx.writeBuffer();

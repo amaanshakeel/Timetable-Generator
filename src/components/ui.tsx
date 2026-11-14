@@ -146,7 +146,12 @@ export interface DraftStatus {
   restore: () => void;
   discard: () => void;
 }
-export function useDraft<T>(key: string, initial: T, baseRevision?: number) {
+export function useDraft<T>(
+  key: string,
+  initial: T,
+  baseRevision?: number,
+  legacyKey?: string,
+) {
   const tab = useRef<string>("");
   if (!tab.current) {
     try {
@@ -158,13 +163,21 @@ export function useDraft<T>(key: string, initial: T, baseRevision?: number) {
     }
   }
   const prefix = "uor-draft-" + tab.current + "-" + key;
+  const legacyPrefix = legacyKey
+    ? "uor-draft-" + tab.current + "-" + legacyKey
+    : undefined;
   const read = () => {
     try {
-      return JSON.parse(localStorage.getItem(prefix) || "null") as {
+      const stored = localStorage.getItem(prefix);
+      // Older class drafts were keyed by the current workspace revision.
+      const legacy =
+        !stored && legacyPrefix ? localStorage.getItem(legacyPrefix) : null;
+      const parsed = JSON.parse(stored || legacy || "null") as {
         draftVersion: number;
         baseRevision?: number;
         value: T;
       } | null;
+      return parsed && legacy ? { ...parsed, baseRevision } : parsed;
     } catch {
       return null;
     }
@@ -210,15 +223,19 @@ export function useDraft<T>(key: string, initial: T, baseRevision?: number) {
     }
     setValue(next);
   };
-  const discard = () => {
+  const clear = () => {
     localStorage.removeItem(prefix);
+    if (legacyPrefix) localStorage.removeItem(legacyPrefix);
+  };
+  const discard = () => {
+    clear();
     setValue(initial);
     setOlder(null);
   };
   return [
     value,
     setDraft,
-    () => localStorage.removeItem(prefix),
+    clear,
     {
       conflict: older !== null,
       restore: () => {

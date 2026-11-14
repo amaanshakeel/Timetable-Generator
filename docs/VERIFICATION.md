@@ -68,3 +68,12 @@ Validation: TypeScript, all 29 unit/integration tests, all 17 browser workflows,
 Setup badges now open the exact subject offering for unscheduled requirements. Scheduled class-count badges and existing Open class actions open the relevant day, clear timetable filters, scroll to and outline the class, and open its editor. Sample loading remains setup-only; the confirmation and empty schedule now explain Generate, Review, Apply. The sample generation/apply flow was verified working.
 
 TypeScript, all 30 unit/integration tests, all 20 browser workflows, and the production build passed. The new issue-navigation regression failed before implementation, then passed.
+
+
+## Saved timetable alternatives (2026-11-14)
+
+Once a timetable exists, Create new timetable generates a named alternative from a copy of the current setup. Review and Apply create the alternative atomically; cancelling leaves the current schedule unchanged. Active timetable switches between independently saved setup, sessions, notes and locks. All alternatives share the workspace autosave/ownership/revision safeguards and are included in JSON backups. PDF/Excel export the active timetable and include its name. Older backups remain supported.
+
+Review identified unstable draft identities for the original timetable and class forms. Stable timetable/session keys, revision-based draft review, legacy class-draft migration and missing-group/lock guards address this. Browser regressions cover saved notes/locks, cancellation, switching, reload, actual backup download, unfinished setup/class drafts after switching, and previous-version draft migration. No material review findings remain.
+
+Final validation: TypeScript, all 32 unit/integration tests, all 23 browser workflows, and production build passed. Inspected desktop/mobile selector layouts with no horizontal page overflow. One export unit test initially exceeded its timeout during concurrent build/browser load; the complete unit suite passed when rerun alone (including that export test).

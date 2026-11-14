@@ -1,3 +1,4 @@
+import { timetableDraftId } from "../../domain/timetables";
 import { useState } from "react";
 import {
   Plus,
@@ -30,7 +31,7 @@ export function SettingsPanel({
   onRestore: () => void;
 }) {
   const [s, set, clear, draft] = useDraft(
-      p.id + "-settings",
+      timetableDraftId(p) + "-settings",
       p.settings,
       p.revision,
     ),

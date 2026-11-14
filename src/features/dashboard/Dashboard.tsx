@@ -31,6 +31,7 @@ export function Dashboard({
   readOnly,
   onNavigate,
   onGenerate,
+  onCreateNew,
   onBackup,
 }: {
   project: Project;
@@ -38,6 +39,7 @@ export function Dashboard({
   readOnly: boolean;
   onNavigate: (page: DashboardDestination) => void;
   onGenerate: () => void;
+  onCreateNew: () => void;
   onBackup: () => void;
 }) {
   const slots = p.settings.slots.filter((s) => !s.isBreak);
@@ -114,6 +116,15 @@ export function Dashboard({
             <CalendarDays size={16} />
             Open timetable
           </button>
+          {(p.sessions.length > 0 || !!p.savedTimetables?.length) && (
+            <button
+              className="btn secondary"
+              disabled={readOnly}
+              onClick={onCreateNew}
+            >
+              Create new timetable
+            </button>
+          )}
           <button
             className="btn primary"
             disabled={readOnly || !p.offerings.length}

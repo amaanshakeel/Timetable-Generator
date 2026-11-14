@@ -27,14 +27,24 @@ import {
   swapSessions,
   emptyBreakSlotIds,
 } from "../../domain/editing";
+import { timetableOptions, timetableDraftId } from "../../domain/timetables";
 import { groupLabel } from "../../domain/issues";
-import { Modal, Form, Field, Empty, useDraft } from "../../components/ui";
+import {
+  Modal,
+  Form,
+  Field,
+  Empty,
+  useDraft,
+  DraftNotice,
+} from "../../components/ui";
 export function TimetablePanel({
   project: p,
   filter,
   onFilter,
   onChange,
   onGenerate,
+  onCreateNew,
+  onSelectTimetable,
   readOnly,
   issues,
   onError,
@@ -45,6 +55,8 @@ export function TimetablePanel({
   onFilter: (f: TimetableFilter) => void;
   onChange: (p: Project) => boolean;
   onGenerate: () => void;
+  onCreateNew: () => void;
+  onSelectTimetable: (id: string) => void;
   readOnly: boolean;
   issues: Issue[];
   onError: (s: string) => void;
@@ -157,15 +169,47 @@ export function TimetablePanel({
             teaching days.
           </p>
         </div>
-        <button
-          className="btn primary"
-          disabled={readOnly || !p.offerings.length}
-          onClick={onGenerate}
-        >
-          <Layers size={17} />
-          Generate timetable
-        </button>
+        <div className="filter-row timetable-heading-actions">
+          {(p.sessions.length > 0 || !!p.savedTimetables?.length) && (
+            <button
+              className="btn secondary"
+              disabled={readOnly}
+              onClick={onCreateNew}
+            >
+              <Plus size={16} />
+              Create new timetable
+            </button>
+          )}
+          <button
+            className="btn primary"
+            disabled={readOnly || !p.offerings.length}
+            onClick={onGenerate}
+          >
+            <Layers size={17} />
+            Generate timetable
+          </button>
+        </div>
       </div>
+      {(p.sessions.length > 0 || !!p.savedTimetables?.length) && (
+        <div className="timetable-library panel">
+          <label htmlFor="active-timetable">Active timetable</label>
+          <select
+            id="active-timetable"
+            value={p.activeTimetableId || p.id}
+            disabled={readOnly}
+            onChange={(e) => onSelectTimetable(e.target.value)}
+          >
+            {timetableOptions(p).map((t) => (
+              <option value={t.id} key={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <span className="small muted">
+            Each timetable saves its own setup and classes.
+          </span>
+        </div>
+      )}
       {!p.sessions.length && p.offerings.length > 0 && (
         <div className="notice" role="status">
           Setup is loaded. Generate a timetable, review it, then apply it to
@@ -697,12 +741,16 @@ function SessionEditor({
   onClose: () => void;
   onMove: () => void;
 }) {
-  const [value, set, clearDraft] = useDraft(
-    p.id + "-session-" + s.id + "-" + p.revision,
+  const [value, set, clearDraft, draft] = useDraft(
+    timetableDraftId(p) + "-session-" + s.id,
     s,
+    p.revision,
+    p.id + "-session-" + s.id + "-" + p.revision,
   );
   const [error, setError] = useState("");
-  const group = p.teachingGroups.find((g) => g.id === value.teachingGroupId)!;
+  const group =
+    p.teachingGroups.find((g) => g.id === value.teachingGroupId) ||
+    p.teachingGroups.find((g) => g.id === s.teachingGroupId)!;
   const eligibleTeachers = p.teachers.filter((t) =>
     t.subjectIds.includes(group.subjectId),
   );
@@ -715,6 +763,16 @@ function SessionEditor({
         onSubmit={(e) => {
           e.preventDefault();
           if (readOnly) return;
+          if (s.locked) {
+            setError("Unlock this class before editing it.");
+            return;
+          }
+          if (group.id !== value.teachingGroupId) {
+            setError(
+              "Choose a current teaching group before saving this older draft.",
+            );
+            return;
+          }
           if (!eligibleTeachers.some((t) => t.id === value.teacherId)) {
             setError(
               "Select an eligible teacher for this subject before saving.",
@@ -731,10 +789,16 @@ function SessionEditor({
           } else setError("Could not save this class");
         }}
       >
+        <DraftNotice draft={draft} />
         <fieldset disabled={readOnly || s.locked} className="plain-fieldset">
           <Field label="Subject & teaching group">
             <select
-              value={value.teachingGroupId}
+              required
+              value={
+                p.teachingGroups.some((g) => g.id === value.teachingGroupId)
+                  ? value.teachingGroupId
+                  : ""
+              }
               onChange={(e) => {
                 const nextGroup = p.teachingGroups.find(
                   (g) => g.id === e.target.value,
@@ -751,6 +815,9 @@ function SessionEditor({
                 });
               }}
             >
+              <option value="" disabled>
+                Select a current teaching group
+              </option>
               {p.teachingGroups.map((g) => (
                 <option key={g.id} value={g.id}>
                   {p.subjects.find((s) => s.id === g.subjectId)?.name} —{" "}

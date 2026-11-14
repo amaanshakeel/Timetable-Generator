@@ -1,3 +1,4 @@
+import { timetableDraftId } from "../../domain/timetables";
 import { useState, type FormEvent } from "react";
 import {
   Plus,
@@ -553,7 +554,7 @@ export function DataPanel({
       )}
       {edit && kind === "departments" && (
         <DepartmentEditor
-          projectId={p.id}
+          projectId={timetableDraftId(p)}
           revision={p.revision}
           semesterCount={p.settings.semesterCount}
           defaultSemesters={lastSemesters}
@@ -753,7 +754,7 @@ function OfferingEditor({
 }) {
   const existing = p.subjects.find((s) => s.id === value?.subjectId);
   const [v, set, clear, draft] = useDraft(
-    p.id + "-offering-" + (value?.id || "new"),
+    timetableDraftId(p) + "-offering-" + (value?.id || "new"),
     {
       id: value?.id || uid(),
       subjectId: value?.subjectId || "",
@@ -1072,7 +1073,7 @@ function ResourceEditor({
 }) {
   const isTeacher = kind === "teachers";
   const [v, set, clear, draft] = useDraft<Teacher & { type: string }>(
-    p.id + "-resource-" + kind + "-" + (value?.id || "new"),
+    timetableDraftId(p) + "-resource-" + kind + "-" + (value?.id || "new"),
     {
       id: value?.id || uid(),
       name: value?.name || "",

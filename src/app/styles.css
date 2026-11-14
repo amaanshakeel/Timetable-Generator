@@ -3073,3 +3073,37 @@ hr {
   outline: 2px solid var(--navy);
   outline-offset: 2px;
 }
+
+.timetable-heading-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.timetable-library {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.timetable-library label {
+  font-weight: 600;
+  color: var(--navy);
+}
+.timetable-library select {
+  width: auto;
+  min-width: 170px;
+  max-width: 100%;
+}
+@media (max-width: 550px) {
+  .timetable-heading-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .timetable-library {
+    align-items: stretch;
+  }
+  .timetable-library select {
+    width: 100%;
+  }
+}

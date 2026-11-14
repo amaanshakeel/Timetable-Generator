@@ -21,8 +21,9 @@ Open the Local URL printed by Vite. If Windows blocks `npm.ps1`, use `npm.cmd`. 
 4. Review automatically detected Shared subjects. Enable combining only where permitted and set maximum groups if needed.
 5. Add teachers, select eligible subjects from the searchable department-semester categories, and set availability. Add rooms with types and availability.
 6. Generate, review the proposed assignments and workload changes, then apply. Incomplete results explain unplaced requirements. Locks are preserved.
-7. Click a class to edit or lock it. Drag to move or swap, or use Move / swap and select a target cell. Manual conflicts are allowed and highlighted in light red with warning icons and a separate issues list. In Clashes & issues, Open class or a class-count button opens and highlights the affected timetable cell. Setup buttons open the relevant unscheduled subject offering.
-8. Filter by department, semester, or both. Export the current filter or full university to PDF or Excel.
+7. Once a timetable exists, use **Create new timetable** to generate a named alternative from a copy of the current setup. Review and apply it, then use **Active timetable** to switch. Each timetable keeps its own setup, classes, notes, and locks; changes do not sync between alternatives. Backups include all alternatives, while PDF/Excel export the active timetable.
+8. Click a class to edit or lock it. Drag to move or swap, or use Move / swap and select a target cell. Manual conflicts are allowed and highlighted in light red with warning icons and a separate issues list. In Clashes & issues, Open class or a class-count button opens and highlights the affected timetable cell. Setup buttons open the relevant unscheduled subject offering.
+9. Filter by department, semester, or both. Export the current filter or full university to PDF or Excel.
 
 Combined classes appear once and retain all attending groups. Their teacher workload counts once per session. Different groups can have the same teacher at different times. Room type and availability determine suitability; student counts and room capacity are intentionally excluded.
 

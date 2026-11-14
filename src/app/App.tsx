@@ -45,7 +45,12 @@ import { SettingsPanel } from "../features/setup/SettingsPanel";
 import { Dashboard } from "../features/dashboard/Dashboard";
 import { TimetablePanel } from "../features/timetable/TimetablePanel";
 import { IssuesPanel, WorkloadPanel } from "../features/timetable/IssuesPanel";
-import { Modal, Confirm } from "../components/ui";
+import {
+  createTimetable,
+  switchTimetable,
+  timetableOptions,
+} from "../domain/timetables";
+import { Modal, Confirm, Form, Field } from "../components/ui";
 import type { GenerationResult, Progress } from "../scheduler/search";
 type Page =
   | "dashboard"
@@ -110,7 +115,11 @@ export default function App() {
     [restorationDismissed, setRestorationDismissed] = useState(false),
     [result, setResult] = useState<GenerationResult | null>(null),
     [progress, setProgress] = useState<Progress | null>(null),
-    [generating, setGenerating] = useState(false);
+    [generating, setGenerating] = useState(false),
+    [newTimetableOpen, setNewTimetableOpen] = useState(false),
+    [newTimetableName, setNewTimetableName] = useState(""),
+    [newTimetableError, setNewTimetableError] = useState(""),
+    [generationName, setGenerationName] = useState<string | null>(null);
   const worker = useRef<Worker | null>(null),
     runId = useRef(""),
     input = useRef<HTMLInputElement>(null);
@@ -137,8 +146,35 @@ export default function App() {
     setPage(id);
     setMobile(false);
   }
-  function generate() {
+  function openNewTimetable() {
     if (state.readOnly) return;
+    let n = timetableOptions(p).length + 1;
+    while (
+      timetableOptions(p).some((t) => t.name.toLowerCase() === `timetable ${n}`)
+    )
+      n++;
+    setNewTimetableName(`Timetable ${n}`);
+    setNewTimetableError("");
+    setNewTimetableOpen(true);
+  }
+  function selectTimetable(id: string) {
+    try {
+      if (state.update(switchTimetable(p, id))) {
+        setInspected(undefined);
+        setInspectedOffering(undefined);
+        setFilter({});
+        setPage("timetable");
+      }
+    } catch (error) {
+      state.setError((error as Error).message);
+    }
+  }
+  function generate() {
+    runGeneration(p, null);
+  }
+  function runGeneration(source: Project, name: string | null) {
+    if (state.readOnly) return;
+    setGenerationName(name);
     setResult(null);
     setProgress(null);
     setGenerating(true);
@@ -174,7 +210,7 @@ export default function App() {
       setGenerating(false);
       w.terminate();
     };
-    w.postMessage({ runId: id, project: p });
+    w.postMessage({ runId: id, project: source });
   }
   function cancel() {
     worker.current?.terminate();
@@ -386,18 +422,21 @@ export default function App() {
                 readOnly={state.readOnly}
                 onNavigate={navigate}
                 onGenerate={generate}
+                onCreateNew={openNewTimetable}
                 onBackup={backup}
               />
             )}
             {page === "timetable" && (
               <TimetablePanel
-                key={p.id + state.formsEpoch}
+                key={p.id + (p.activeTimetableId || "") + state.formsEpoch}
                 initialSessionId={inspected}
                 project={p}
                 filter={filter}
                 onFilter={setFilter}
                 onChange={state.update}
                 onGenerate={generate}
+                onCreateNew={openNewTimetable}
+                onSelectTimetable={selectTimetable}
                 readOnly={state.readOnly}
                 issues={issues}
                 onError={state.setError}
@@ -407,7 +446,9 @@ export default function App() {
               page,
             ) && (
               <DataPanel
-                key={page + p.id + state.formsEpoch}
+                key={
+                  page + p.id + (p.activeTimetableId || "") + state.formsEpoch
+                }
                 kind={page as "departments" | "subjects" | "teachers" | "rooms"}
                 initialOfferingId={
                   page === "subjects" ? inspectedOffering : undefined
@@ -424,7 +465,7 @@ export default function App() {
                 onImport={() => input.current?.click()}
                 onReset={() => setFresh(true)}
                 onRestore={state.restore}
-                key={p.id + state.formsEpoch}
+                key={p.id + (p.activeTimetableId || "") + state.formsEpoch}
                 project={p}
                 onChange={state.update}
                 readOnly={state.readOnly}
@@ -493,6 +534,48 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {newTimetableOpen && (
+        <Modal
+          title="Create new timetable"
+          onClose={() => setNewTimetableOpen(false)}
+        >
+          <Form
+            onClose={() => setNewTimetableOpen(false)}
+            submit="Generate new timetable"
+            error={newTimetableError}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const name = newTimetableName.trim();
+              if (
+                !name ||
+                timetableOptions(p).some(
+                  (t) => t.name.toLowerCase() === name.toLowerCase(),
+                )
+              ) {
+                setNewTimetableError("Choose a unique timetable name.");
+                return;
+              }
+              setNewTimetableOpen(false);
+              runGeneration({ ...p, sessions: [], teachingGroups: [] }, name);
+            }}
+          >
+            <Field label="Timetable name">
+              <input
+                required
+                maxLength={100}
+                value={newTimetableName}
+                onChange={(e) => setNewTimetableName(e.target.value)}
+              />
+            </Field>
+            <p className="notice">
+              The new timetable uses a copy of your current departments,
+              subjects, teachers, rooms, availability and settings. Your
+              existing timetable, notes and locks stay saved separately. Review
+              the generated result before creating it.
+            </p>
+          </Form>
+        </Modal>
+      )}
       {result && (
         <Modal
           title="Review generated timetable"
@@ -500,6 +583,12 @@ export default function App() {
           wide
         >
           <div className="modal-body">
+            {generationName && (
+              <p className="notice">
+                Creating {generationName}. Your current timetable will remain
+                available in the timetable selector.
+              </p>
+            )}
             <div className="result-banner">
               <CheckCircle2 size={27} />
               <div>
@@ -609,8 +698,10 @@ export default function App() {
               })}
             </div>
             <p className="notice">
-              Applying replaces the unlocked schedule. You can undo the entire
-              change. Any remaining warnings will appear in Clashes & Issues.
+              {generationName
+                ? "Applying saves a separate timetable using the copied setup. Your previous timetable stays available."
+                : "Applying replaces the unlocked schedule. You can undo the entire change."}{" "}
+              Any remaining warnings will appear in Clashes & Issues.
             </p>
           </div>
           <div className="modal-foot">
@@ -622,13 +713,20 @@ export default function App() {
               disabled={state.readOnly || result.inputRevision !== p.revision}
               onClick={() => {
                 if (
-                  state.update({
-                    ...p,
-                    teachingGroups: result.teachingGroups,
-                    sessions: result.sessions,
-                  })
+                  state.update(
+                    generationName
+                      ? createTimetable(p, generationName, result)
+                      : {
+                          ...p,
+                          teachingGroups: result.teachingGroups,
+                          sessions: result.sessions,
+                        },
+                  )
                 ) {
                   setResult(null);
+                  setInspected(undefined);
+                  setInspectedOffering(undefined);
+                  setFilter({});
                   setPage("timetable");
                 }
               }}
