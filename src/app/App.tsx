@@ -97,6 +97,7 @@ export default function App() {
       }
     }),
     [inspected, setInspected] = useState<string | undefined>(),
+    [inspectedOffering, setInspectedOffering] = useState<string | undefined>(),
     [filter, setFilter] = useState<TimetableFilter>({}),
     [mobile, setMobile] = useState(false),
     [exporting, setExporting] = useState(false),
@@ -132,6 +133,7 @@ export default function App() {
   }, [state.setError]);
   function navigate(id: Page) {
     setInspected(undefined);
+    setInspectedOffering(undefined);
     setPage(id);
     setMobile(false);
   }
@@ -407,6 +409,9 @@ export default function App() {
               <DataPanel
                 key={page + p.id + state.formsEpoch}
                 kind={page as "departments" | "subjects" | "teachers" | "rooms"}
+                initialOfferingId={
+                  page === "subjects" ? inspectedOffering : undefined
+                }
                 project={p}
                 onChange={state.update}
                 readOnly={state.readOnly}
@@ -430,7 +435,13 @@ export default function App() {
               <IssuesPanel
                 project={p}
                 issues={issues}
+                onSetup={(offeringId) => {
+                  setInspectedOffering(offeringId);
+                  setInspected(undefined);
+                  setPage("subjects");
+                }}
                 onInspect={(id) => {
+                  setInspectedOffering(undefined);
                   setInspected(id);
                   setFilter({});
                   setPage("timetable");
@@ -762,6 +773,8 @@ export default function App() {
           onClose={() => setSample(false)}
           onConfirm={() => {
             void state.start(sampleProject());
+            setInspected(undefined);
+            setInspectedOffering(undefined);
             setSample(false);
             setPage("timetable");
             setFilter({});
@@ -769,8 +782,9 @@ export default function App() {
         >
           <p>
             This replaces the current workspace with fictional sample
-            departments, subjects, teachers, and rooms. Your current saved
-            workspace is retained as a recovery snapshot.
+            departments, subjects, teachers, and rooms. After loading, click
+            Generate timetable, review the result, then apply it. Your current
+            saved workspace is retained as a recovery snapshot.
           </p>
         </Confirm>
       )}

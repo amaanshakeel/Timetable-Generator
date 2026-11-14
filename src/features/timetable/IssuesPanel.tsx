@@ -5,10 +5,12 @@ export function IssuesPanel({
   project: p,
   issues,
   onInspect,
+  onSetup,
 }: {
   project: Project;
   issues: Issue[];
   onInspect: (id: string) => void;
+  onSetup: (offeringId?: string) => void;
 }) {
   const serious = issues.filter((i) => i.kind !== "repeated-day");
   return (
@@ -82,11 +84,23 @@ export function IssuesPanel({
                       </p>
                     )}
                   </div>
-                  <span className="badge">
+                  <button
+                    className="btn secondary issue-action"
+                    title={
+                      i.sessionIds.length
+                        ? "Open the affected timetable class"
+                        : "No class is scheduled yet. Open its subject setup."
+                    }
+                    onClick={() =>
+                      i.sessionIds.length
+                        ? onInspect(i.sessionIds[0])
+                        : onSetup(i.offeringId)
+                    }
+                  >
                     {i.sessionIds.length
                       ? `${i.sessionIds.length} classes`
                       : "Setup"}
-                  </span>
+                  </button>
                 </article>
               ))}
             </div>

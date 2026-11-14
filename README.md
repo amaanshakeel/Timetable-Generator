@@ -15,13 +15,13 @@ Open the Local URL printed by Vite. If Windows blocks `npm.ps1`, use `npm.cmd`. 
 
 ## Prepare a timetable
 
-1. Open the application directly into Dashboard. Use its setup shortcuts or the sidebar; no project-start screen is required. Optional fictional sample data is available under **Settings → Workspace data → Load sample data**, with replacement confirmation.
+1. Open the application directly into Dashboard. Use its setup shortcuts or the sidebar; no project-start screen is required. Optional fictional sample data is available under **Settings → Workspace data → Load sample data**, with replacement confirmation. Sample loading supplies setup records; click Generate timetable, review the result, and Apply timetable to populate the grid.
 2. Set teaching days, semesters, time slots/breaks, room types, and combining limits in Settings. The supplied defaults are editable examples, not university policy.
 3. Add departments and select their semesters (multiple selections are allowed). The last saved semester selection is reused for the next department. Under Subjects, select a semester and enter each department's subject offerings, weekly class count, and required room type. Reusing a university-wide subject code reuses the catalog subject.
 4. Review automatically detected Shared subjects. Enable combining only where permitted and set maximum groups if needed.
 5. Add teachers, select eligible subjects from the searchable department-semester categories, and set availability. Add rooms with types and availability.
 6. Generate, review the proposed assignments and workload changes, then apply. Incomplete results explain unplaced requirements. Locks are preserved.
-7. Click a class to edit or lock it. Drag to move or swap, or use Move / swap and select a target cell. Manual conflicts are allowed and highlighted in light red with warning icons and a separate issues list.
+7. Click a class to edit or lock it. Drag to move or swap, or use Move / swap and select a target cell. Manual conflicts are allowed and highlighted in light red with warning icons and a separate issues list. In Clashes & issues, Open class or a class-count button opens and highlights the affected timetable cell. Setup buttons open the relevant unscheduled subject offering.
 8. Filter by department, semester, or both. Export the current filter or full university to PDF or Excel.
 
 Combined classes appear once and retain all attending groups. Their teacher workload counts once per session. Different groups can have the same teacher at different times. Room type and availability determine suitability; student counts and room capacity are intentionally excluded.

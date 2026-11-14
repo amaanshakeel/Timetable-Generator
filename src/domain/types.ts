@@ -83,6 +83,7 @@ export interface Issue {
   kind: string;
   message: string;
   sessionIds: string[];
+  offeringId?: string;
 }
 export interface TimetableFilter {
   departmentId?: string;

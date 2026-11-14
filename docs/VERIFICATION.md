@@ -61,3 +61,10 @@ Teacher details retain the existing multiple-subject checkbox picker. The class 
 
 The new browser regression checks the exact teacher lists for English, Management and Mathematics, including retaining a teacher eligible for multiple subjects and clearing an incompatible selection.
 Validation: TypeScript, all 29 unit/integration tests, all 17 browser workflows, and the production build passed.
+
+
+## Issue navigation and sample generation guidance (2026-11-14)
+
+Setup badges now open the exact subject offering for unscheduled requirements. Scheduled class-count badges and existing Open class actions open the relevant day, clear timetable filters, scroll to and outline the class, and open its editor. Sample loading remains setup-only; the confirmation and empty schedule now explain Generate, Review, Apply. The sample generation/apply flow was verified working.
+
+TypeScript, all 30 unit/integration tests, all 20 browser workflows, and the production build passed. The new issue-navigation regression failed before implementation, then passed.

@@ -3057,3 +3057,12 @@ hr {
 .semester-options .picker-option {
   margin: 0;
 }
+
+.issue-action {
+  align-self: start;
+  white-space: nowrap;
+}
+.class-card.inspected {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}

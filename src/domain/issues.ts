@@ -15,8 +15,19 @@ export function groupLabel(p: Project, groupId: string) {
 }
 export function findIssues(p: Project): Issue[] {
   const issues: Issue[] = [];
-  const add = (kind: string, message: string, sessionIds: string[]) =>
-    issues.push({ id: `${kind}-${issues.length}`, kind, message, sessionIds });
+  const add = (
+    kind: string,
+    message: string,
+    sessionIds: string[],
+    offeringId?: string,
+  ) =>
+    issues.push({
+      id: `${kind}-${issues.length}`,
+      kind,
+      message,
+      sessionIds,
+      ...(offeringId ? { offeringId } : {}),
+    });
   const groups = new Map(p.teachingGroups.map((g) => [g.id, g]));
   const label = (s: Session) =>
     `${p.subjects.find((x) => x.id === groups.get(s.teachingGroupId)?.subjectId)?.name || "Class"} (${groupLabel(p, s.teachingGroupId)})`;
@@ -85,6 +96,7 @@ export function findIssues(p: Project): Issue[] {
         "combining",
         `${subject?.name} no longer meets its combining permission or maximum group limit`,
         ss.map((s) => s.id),
+        g.offeringIds[0],
       );
     if (
       g.offeringIds.some((id) => {
@@ -99,6 +111,7 @@ export function findIssues(p: Project): Issue[] {
         "combining",
         `${subject?.name} has incompatible weekly counts or room requirements in its teaching group`,
         ss.map((s) => s.id),
+        g.offeringIds[0],
       );
     for (const day of p.settings.days) {
       const same = ss.filter((s) => s.dayId === day);
@@ -126,12 +139,14 @@ export function findIssues(p: Project): Issue[] {
         "requirement",
         `${p.subjects.find((s) => s.id === o.subjectId)?.name} · ${p.departments.find((d) => d.id === o.departmentId)?.code} Sem ${o.semester}: ${ss.length} of ${o.weeklyClasses} weekly classes scheduled`,
         ss.map((s) => s.id),
+        o.id,
       );
     if (gs.length > 1)
       add(
         "duplicate-assignment",
         "A subject offering belongs to multiple teaching groups",
         ss.map((s) => s.id),
+        o.id,
       );
   }
   return issues;

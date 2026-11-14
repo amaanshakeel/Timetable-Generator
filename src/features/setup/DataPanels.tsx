@@ -41,6 +41,7 @@ interface Props {
   onChange: (p: Project) => boolean;
   readOnly: boolean;
   onError: (s: string) => void;
+  initialOfferingId?: string;
 }
 const titles = {
   departments: "Departments",
@@ -60,12 +61,17 @@ export function DataPanel({
   onChange,
   readOnly,
   onError,
+  initialOfferingId,
 }: Props) {
   const [search, setSearch] = useState(""),
-    [edit, setEdit] = useState<string | null>(null),
+    [edit, setEdit] = useState<string | null>(initialOfferingId || null),
     [remove, setRemove] = useState<string | null>(null),
-    [semester, setSemester] = useState(1),
-    [department, setDepartment] = useState("");
+    [semester, setSemester] = useState(
+      p.offerings.find((o) => o.id === initialOfferingId)?.semester || 1,
+    ),
+    [department, setDepartment] = useState(
+      p.offerings.find((o) => o.id === initialOfferingId)?.departmentId || "",
+    );
   const preferenceKey = "uor-department-semesters-" + p.id;
   const [lastSemesters, setLastSemesters] = useState<number[]>(() => {
     try {

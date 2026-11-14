@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Filter,
   ChevronDown,
@@ -69,6 +69,21 @@ export function TimetablePanel({
       ids: string[];
       to: Placement;
     } | null>(null);
+  useEffect(() => {
+    if (!initialSessionId) return;
+    const frame = requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(
+          `[data-session="${CSS.escape(initialSessionId)}"]`,
+        )
+        ?.scrollIntoView({
+          block: "center",
+          inline: "center",
+          behavior: "instant",
+        });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialSessionId]);
   const sessions = selectSessions(p, filter),
     warned = new Set(issues.flatMap((i) => i.sessionIds));
   const activeDay = p.settings.days.includes(day) ? day : p.settings.days[0];
@@ -151,6 +166,12 @@ export function TimetablePanel({
           Generate timetable
         </button>
       </div>
+      {!p.sessions.length && p.offerings.length > 0 && (
+        <div className="notice" role="status">
+          Setup is loaded. Generate a timetable, review it, then apply it to
+          place classes in the grid.
+        </div>
+      )}
       <div className="stats-grid">
         <Stat
           icon={<CalendarDays size={21} />}
@@ -418,7 +439,7 @@ export function TimetablePanel({
                                 <button
                                   data-session={s.id}
                                   key={s.id}
-                                  className={`class-card ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
+                                  className={`class-card ${initialSessionId === s.id ? "inspected" : ""} ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
                                   style={
                                     {
                                       "--card-color": color,
