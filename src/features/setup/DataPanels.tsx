@@ -84,8 +84,8 @@ export function DataPanel({
     }
     return [1];
   });
-  const availableDepartments = p.departments.filter((d) =>
-    departmentSemesters(p, d).includes(semester),
+  const availableDepartments = p.departments.filter(
+    (d) => semester === 0 || departmentSemesters(p, d).includes(semester),
   );
   const matches = (text: string) =>
     text.toLowerCase().includes(search.toLowerCase());
@@ -170,7 +170,7 @@ export function DataPanel({
   );
   const offerings = p.offerings.filter(
     (o) =>
-      o.semester === semester &&
+      (semester === 0 || o.semester === semester) &&
       (!department || o.departmentId === department) &&
       matches(
         `${subject(o.subjectId)?.name} ${subject(o.subjectId)?.code} ${p.departments.find((d) => d.id === o.departmentId)?.code}`,
@@ -216,12 +216,14 @@ export function DataPanel({
                     !p.departments.some(
                       (d) =>
                         d.id === department &&
-                        departmentSemesters(p, d).includes(nextSemester),
+                        (nextSemester === 0 ||
+                          departmentSemesters(p, d).includes(nextSemester)),
                     )
                   )
                     setDepartment("");
                 }}
               >
+                <option value={0}>All semesters</option>
                 {Array.from({ length: p.settings.semesterCount }, (_, i) => (
                   <option key={i + 1} value={i + 1}>
                     Semester {i + 1}
@@ -243,7 +245,10 @@ export function DataPanel({
             </div>
           )}
           <span className="count-label">
-            {kind === "subjects" ? p.offerings.length : p[kind].length} records
+            {kind === "subjects"
+              ? `${offerings.length} of ${p.offerings.length}`
+              : p[kind].length}{" "}
+            records
           </span>
         </div>
         {kind === "departments" && (
@@ -575,7 +580,11 @@ export function DataPanel({
         <OfferingEditor
           project={p}
           value={p.offerings.find((o) => o.id === edit)}
-          semester={semester}
+          semester={
+            semester ||
+            p.departments.find((d) => d.id === department)?.semesters?.[0] ||
+            1
+          }
           department={department}
           onClose={() => setEdit(null)}
           onSave={save}
