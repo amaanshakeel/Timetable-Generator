@@ -167,7 +167,7 @@ export function SettingsPanel({
                     set({ ...s, semesterCount: +e.target.value })
                   }
                 >
-                  {Array.from({ length: 16 }, (_, i) => (
+                  {Array.from({ length: 8 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>
                       {i + 1} semesters
                     </option>
