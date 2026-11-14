@@ -54,3 +54,10 @@ Classes can be edited or moved into break slots, including drag and click-to-mov
 An entirely empty break column merges across room rows and displays a vertical Break label. Occupied break columns use normal editable cells. Emptiness is checked across the full day's timetable, including classes hidden by filters. PDF and Excel exports follow the same rule.
 
 Validation: TypeScript passed, all 29 unit/integration tests and 16 browser workflows passed, and the production build passed. Review found no material regression. Rendered PDF pages 1 and 2 were inspected: the merged column spans room rows and page continuation without internal room borders, and the long note continues legibly.
+
+## Eligible teacher dropdown — 2026-11-14
+
+Teacher details retain the existing multiple-subject checkbox picker. The class editor now lists only teachers whose eligible subjects include the selected teaching group's subject. Changing groups preserves an eligible selection and clears an ineligible selection. An empty list explains that teacher details need updating; saving requires an eligible selection. This does not change manual availability/clash warnings.
+
+The new browser regression checks the exact teacher lists for English, Management and Mathematics, including retaining a teacher eligible for multiple subjects and clearing an incompatible selection.
+Validation: TypeScript, all 29 unit/integration tests, all 17 browser workflows, and the production build passed.

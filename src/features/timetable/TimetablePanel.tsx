@@ -682,6 +682,9 @@ function SessionEditor({
   );
   const [error, setError] = useState("");
   const group = p.teachingGroups.find((g) => g.id === value.teachingGroupId)!;
+  const eligibleTeachers = p.teachers.filter((t) =>
+    t.subjectIds.includes(group.subjectId),
+  );
   return (
     <Modal title="Edit class" onClose={onClose}>
       <Form
@@ -691,6 +694,12 @@ function SessionEditor({
         onSubmit={(e) => {
           e.preventDefault();
           if (readOnly) return;
+          if (!eligibleTeachers.some((t) => t.id === value.teacherId)) {
+            setError(
+              "Select an eligible teacher for this subject before saving.",
+            );
+            return;
+          }
           const next = {
             ...p,
             sessions: p.sessions.map((x) => (x.id === s.id ? value : x)),
@@ -705,9 +714,21 @@ function SessionEditor({
           <Field label="Subject & teaching group">
             <select
               value={value.teachingGroupId}
-              onChange={(e) =>
-                set({ ...value, teachingGroupId: e.target.value })
-              }
+              onChange={(e) => {
+                const nextGroup = p.teachingGroups.find(
+                  (g) => g.id === e.target.value,
+                )!;
+                const eligible = p.teachers.some(
+                  (t) =>
+                    t.id === value.teacherId &&
+                    t.subjectIds.includes(nextGroup.subjectId),
+                );
+                set({
+                  ...value,
+                  teachingGroupId: nextGroup.id,
+                  teacherId: eligible ? value.teacherId : "",
+                });
+              }}
             >
               {p.teachingGroups.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -719,15 +740,22 @@ function SessionEditor({
           </Field>
           <Field label="Teacher">
             <select
-              value={value.teacherId}
+              required
+              value={
+                eligibleTeachers.some((t) => t.id === value.teacherId)
+                  ? value.teacherId
+                  : ""
+              }
               onChange={(e) => set({ ...value, teacherId: e.target.value })}
             >
-              {p.teachers.map((t) => (
+              <option value="" disabled>
+                {eligibleTeachers.length
+                  ? "Select an eligible teacher"
+                  : "No eligible teachers. Update teacher details."}
+              </option>
+              {eligibleTeachers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
-                  {!t.subjectIds.includes(group.subjectId)
-                    ? " (not eligible)"
-                    : ""}
                 </option>
               ))}
             </select>
