@@ -281,7 +281,7 @@ export default function App() {
           <div className="sidebar-foot">
             <span className="uor-mark">U</span>
             <div>
-              <strong>University of Rawalpindi</strong>
+              <strong>Student Affairs</strong>
               <small>Central scheduling team</small>
             </div>
           </div>
