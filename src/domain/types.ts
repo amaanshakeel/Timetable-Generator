@@ -77,6 +77,7 @@ export interface Project {
   rooms: Room[];
   teachingGroups: TeachingGroup[];
   sessions: Session[];
+  manualWorkspace?: boolean;
   activeTimetableId?: string;
   timetableName?: string;
   savedTimetables?: SavedTimetable[];
@@ -156,6 +157,7 @@ export type TimetableData = Pick<
   | "rooms"
   | "teachingGroups"
   | "sessions"
+  | "manualWorkspace"
 >;
 export interface SavedTimetable extends TimetableData {
   id: string;

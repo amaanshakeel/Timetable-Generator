@@ -20,6 +20,9 @@ test("saving an unchanged subject preserves all its scheduled attendance", async
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await page.getByRole("button", { name: "Subjects", exact: true }).click();
   await page
@@ -50,6 +53,9 @@ test("subject requirement changes show affected classes before applying", async 
   await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await page.getByRole("button", { name: "Subjects", exact: true }).click();
@@ -123,6 +129,9 @@ test("drag swaps occupied cells and locked classes survive regeneration", async 
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   const ids = await page
     .locator("[data-session]")
@@ -149,6 +158,9 @@ test("drag swaps occupied cells and locked classes survive regeneration", async 
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await expect
     .poll(() =>
@@ -170,6 +182,9 @@ test("manual conflicts stay editable and issues can open the affected class", as
   await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await page.locator("[data-session]").first().click();
@@ -233,6 +248,9 @@ test("builds a complete timetable from staff-entered setup without sample data",
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   await expect(page.locator("[data-session]")).toHaveCount(1);
@@ -255,6 +273,9 @@ test("setup starts empty and sample project can generate, edit, save and recover
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Review generated timetable" }),
@@ -289,6 +310,9 @@ test("exports actual PDF and Excel files and keeps a second tab read-only", asyn
   await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await page.locator("[data-session]").first().click();
@@ -347,6 +371,9 @@ test("recovers an unfinished class note after an accidental reload", async ({
   await loadSample(page);
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply timetable" }).click();
   await expect(

@@ -86,3 +86,12 @@ Saved timetables now lists each stored version with its name, term, class count,
 Review exposed two recovery edge cases with shared record IDs and delete-then-view operations. Timetable identity removal now triggers archival, while ordinary switching does not overwrite deletion recovery. A browser regression verifies the actual IndexedDB recovery entry after deletion and switching. Final review found no remaining material findings.
 
 Final checks passed: TypeScript, all 34 unit/integration tests, all 25 browser workflows and production build. Desktop/mobile storage-list layouts were inspected. After interruption the preview server was absent; the first browser rerun failed on connection refusal. The server was restarted using the approved execution fallback after a sandbox Windows logon error, and the full browser suite then passed.
+
+
+## Manual and automatic creation workspaces (2026-11-14)
+
+Generate timetable now first offers Create Manually or Generate Automatically. Both paths lead to an editable drag/drop timetable with live global clash warnings. Manual creation starts a named empty alternative using shared grouping rules and copied setup. A pending-class tray enforces weekly counts, supports native drag and click-to-place, and prompts for eligible teachers with a live placement warning preview. Conflicting placements remain allowed and turn affected cells red. Automatic partial results can also be completed from the tray.
+
+Manual workspace mode is saved in active/inactive snapshots and backups. New offerings are reconciled into manual groups without changing placed/locked records. Existing moves, swaps, edits and Undo preserve class notes. Review identified a note-discarding extra action and missing newly added offerings; the extra action was removed and reconciliation was added with regressions. No material findings remain.
+
+Checks: TypeScript, all 37 unit/integration tests, all 27 browser workflows and production build passed. After the final desktop layout refinement, both manual browser regressions, TypeScript and production build were rerun successfully. Desktop uses a side tray to avoid covering table headers; narrow screens use the stacked click-to-place layout, with no horizontal page overflow. Native drag events, live preview/red cells, note reload, new offerings and locked-note preservation were verified.

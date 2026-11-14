@@ -34,6 +34,9 @@ test("setup issues open the offering and scheduled clash badges open their timet
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   await expect(page.locator("[data-session]").first()).toBeVisible();

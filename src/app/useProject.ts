@@ -1,3 +1,4 @@
+import { reconcileManualGroups } from "../domain/manual";
 import { hasRemovedTimetable } from "../domain/timetables";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { emptyProject, type Project } from "../domain/types";
@@ -123,7 +124,7 @@ export function useProject() {
         );
         return false;
       }
-      const valid = validateProject(next);
+      const valid = validateProject(reconcileManualGroups(next));
       if (!valid.ok) {
         setError(valid.error);
         return false;
@@ -170,7 +171,7 @@ export function useProject() {
         return;
       }
       const next = {
-        ...(p || emptyProject()),
+        ...reconcileManualGroups(p || emptyProject()),
         revision: current.current.revision + 1,
         savedAt: new Date().toISOString(),
       };

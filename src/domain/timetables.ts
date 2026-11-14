@@ -15,6 +15,7 @@ function data(p: TimetableData): TimetableData {
     rooms,
     teachingGroups,
     sessions,
+    manualWorkspace,
   } = p;
   return structuredClone({
     settings,
@@ -25,11 +26,19 @@ function data(p: TimetableData): TimetableData {
     rooms,
     teachingGroups,
     sessions,
+    ...(manualWorkspace !== undefined ? { manualWorkspace } : {}),
   });
 }
 export function timetableOptions(p: Project) {
   return [
-    { id: p.activeTimetableId || p.id, name: p.timetableName || "Timetable 1" },
+    ...(p.sessions.length || p.activeTimetableId
+      ? [
+          {
+            id: p.activeTimetableId || p.id,
+            name: p.timetableName || "Timetable 1",
+          },
+        ]
+      : []),
     ...(p.savedTimetables || []).map((t) => ({ id: t.id, name: t.name })),
   ];
 }
@@ -58,7 +67,10 @@ export function createTimetable(
     ...data({ ...p, ...schedule }),
     activeTimetableId: uid(),
     timetableName: trimmed,
-    savedTimetables: [...(p.savedTimetables || []), snapshot(p)],
+    savedTimetables: [
+      ...(p.savedTimetables || []),
+      ...(p.sessions.length || p.activeTimetableId ? [snapshot(p)] : []),
+    ],
   };
 }
 export function switchTimetable(p: Project, id: string): Project {
@@ -68,6 +80,7 @@ export function switchTimetable(p: Project, id: string): Project {
   return {
     ...p,
     ...data(target),
+    manualWorkspace: target.manualWorkspace,
     activeTimetableId: target.id,
     timetableName: target.name,
     savedTimetables: [
@@ -112,6 +125,7 @@ export function deleteTimetable(p: Project, id: string): Project {
     ...p,
     sessions: [],
     teachingGroups: [],
+    manualWorkspace: false,
     activeTimetableId: undefined,
     timetableName: undefined,
     savedTimetables: undefined,

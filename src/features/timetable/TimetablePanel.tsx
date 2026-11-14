@@ -1,3 +1,4 @@
+import { UnscheduledClasses, ManualClassPlacement } from "./ManualWorkspace";
 import { useEffect, useState } from "react";
 import {
   Filter,
@@ -70,6 +71,10 @@ export function TimetablePanel({
         "Mon",
     ),
     [editing, setEditing] = useState<string | null>(initialSessionId || null),
+    [pendingPlacement, setPendingPlacement] = useState<{
+      groupId: string;
+      to: Placement;
+    } | null>(null),
     [dragging, setDragging] = useState<string | null>(null),
     [target, setTarget] = useState<string | null>(null),
     [moving, setMoving] = useState<string | null>(null),
@@ -132,6 +137,14 @@ export function TimetablePanel({
         p.teachingGroups.find((g) => g.id === s.teachingGroupId)?.subjectId,
     );
   function place(source: string, to: Placement) {
+    if (readOnly) return;
+    if (source.startsWith("pending:")) {
+      setPendingPlacement({ groupId: source.slice("pending:".length), to });
+      setMoving(null);
+      setDragging(null);
+      setTarget(null);
+      return;
+    }
     const all = p.sessions.filter(
       (s) =>
         s.id !== source &&
@@ -215,12 +228,14 @@ export function TimetablePanel({
           </span>
         </div>
       )}
-      {!p.sessions.length && p.offerings.length > 0 && (
-        <div className="notice" role="status">
-          Setup is loaded. Generate a timetable, review it, then apply it to
-          place classes in the grid.
-        </div>
-      )}
+      {!p.sessions.length &&
+        p.offerings.length > 0 &&
+        !p.teachingGroups.length && (
+          <div className="notice" role="status">
+            Setup is loaded. Generate a timetable, review it, then apply it to
+            place classes in the grid.
+          </div>
+        )}
       <div className="stats-grid">
         <Stat
           icon={<CalendarDays size={21} />}
@@ -255,332 +270,350 @@ export function TimetablePanel({
           }
         />
       </div>
-      <section className="panel timetable-panel">
-        <div className="timetable-top">
-          <div className="section-heading">
-            <span className="small-icon">
-              <CalendarDays size={19} />
-            </span>
-            <h2>Weekly schedule</h2>
-            <span className="badge subtle">{sessions.length} classes</span>
-          </div>
-          <span className="small muted">
-            {filter.departmentId || filter.semester
-              ? "Filtered view"
-              : "Full university view"}
-          </span>
-        </div>
-        <div className="timetable-filters">
-          <div className="filter-row">
-            <span className="muted filter-label">
-              <Filter size={15} /> Filter by
-            </span>
-            <select
-              aria-label="Filter by department"
-              value={filter.departmentId || ""}
-              onChange={(e) =>
-                onFilter({
-                  ...filter,
-                  departmentId: e.target.value || undefined,
-                })
-              }
-            >
-              <option value="">All departments</option>
-              {p.departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by semester"
-              value={filter.semester || ""}
-              onChange={(e) =>
-                onFilter({ ...filter, semester: +e.target.value || undefined })
-              }
-            >
-              <option value="">All semesters</option>
-              {Array.from({ length: p.settings.semesterCount }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Semester {i + 1}
-                </option>
-              ))}
-            </select>
-            {(filter.departmentId || filter.semester) && (
-              <button className="btn text-btn" onClick={() => onFilter({})}>
-                Clear
-              </button>
-            )}
-          </div>
-          <div className="legend">
-            <span>
-              <i className="legend-dot navy-dot" />
-              Class
-            </span>
-            <span>
-              <LockKeyhole size={12} />
-              Locked
-            </span>
-            <span>
-              <i className="legend-dot red-dot" />
-              Warning
+      <div className="timetable-workspace">
+        <UnscheduledClasses
+          project={p}
+          filter={filter}
+          readOnly={readOnly}
+          selected={moving}
+          onSelect={setMoving}
+        />
+        <section className="panel timetable-panel">
+          <div className="timetable-top">
+            <div className="section-heading">
+              <span className="small-icon">
+                <CalendarDays size={19} />
+              </span>
+              <h2>Weekly schedule</h2>
+              <span className="badge subtle">{sessions.length} classes</span>
+            </div>
+            <span className="small muted">
+              {filter.departmentId || filter.semester
+                ? "Filtered view"
+                : "Full university view"}
             </span>
           </div>
-        </div>
-        <div className="day-tabs" role="tablist" aria-label="Teaching day">
-          {p.settings.days.map((d) => (
-            <button
-              role="tab"
-              aria-selected={activeDay === d}
-              className={activeDay === d ? "active" : ""}
-              key={d}
-              onClick={() => setDay(d)}
-            >
-              {
-                (
-                  {
-                    Mon: "Monday",
-                    Tue: "Tuesday",
-                    Wed: "Wednesday",
-                    Thu: "Thursday",
-                    Fri: "Friday",
-                    Sat: "Saturday",
-                    Sun: "Sunday",
-                  } as Record<string, string>
-                )[d]
-              }
-              <span>{sessions.filter((s) => s.dayId === d).length}</span>
-            </button>
-          ))}
-        </div>
-        {moving && (
-          <div className="notice flex-between">
-            <span>
-              Choose an empty cell to move this class, or an occupied cell to
-              swap.
-            </span>
-            <button className="btn text-btn" onClick={() => setMoving(null)}>
-              Cancel move
-            </button>
-          </div>
-        )}
-        {!p.rooms.length ? (
-          <Empty
-            title="A clear week starts here"
-            description="Add departments, subjects, teachers and rooms, then generate your first university timetable."
-          />
-        ) : (
-          <div className="timetable-scroll">
-            <table className="timetable">
-              <colgroup>
-                <col style={{ width: 145 }} />
-                {p.settings.slots.map((s) => (
-                  <col
-                    key={s.id}
-                    style={{
-                      minWidth: mergedBreakSlots.has(s.id) ? 85 : 190,
-                      width: mergedBreakSlots.has(s.id) ? 85 : 210,
-                    }}
-                  />
+          <div className="timetable-filters">
+            <div className="filter-row">
+              <span className="muted filter-label">
+                <Filter size={15} /> Filter by
+              </span>
+              <select
+                aria-label="Filter by department"
+                value={filter.departmentId || ""}
+                onChange={(e) =>
+                  onFilter({
+                    ...filter,
+                    departmentId: e.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">All departments</option>
+                {p.departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
                 ))}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>
-                    <span className="room-header">ROOM / VENUE</span>
-                    <span className="muted small">{activeDay}</span>
-                  </th>
-                  {p.settings.slots.map((slot) => (
-                    <th
-                      className={slot.isBreak ? "break-head" : ""}
-                      key={slot.id}
-                    >
-                      <Clock3 size={12} />
-                      <span>
-                        {slot.start} – {slot.end}
-                      </span>
-                      <small>
-                        {slot.isBreak ? "UNIVERSITY BREAK" : "TEACHING SLOT"}
-                      </small>
-                    </th>
+              </select>
+              <select
+                aria-label="Filter by semester"
+                value={filter.semester || ""}
+                onChange={(e) =>
+                  onFilter({
+                    ...filter,
+                    semester: +e.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">All semesters</option>
+                {Array.from({ length: p.settings.semesterCount }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    Semester {i + 1}
+                  </option>
+                ))}
+              </select>
+              {(filter.departmentId || filter.semester) && (
+                <button className="btn text-btn" onClick={() => onFilter({})}>
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="legend">
+              <span>
+                <i className="legend-dot navy-dot" />
+                Class
+              </span>
+              <span>
+                <LockKeyhole size={12} />
+                Locked
+              </span>
+              <span>
+                <i className="legend-dot red-dot" />
+                Warning
+              </span>
+            </div>
+          </div>
+          <div className="day-tabs" role="tablist" aria-label="Teaching day">
+            {p.settings.days.map((d) => (
+              <button
+                role="tab"
+                aria-selected={activeDay === d}
+                className={activeDay === d ? "active" : ""}
+                key={d}
+                onClick={() => setDay(d)}
+              >
+                {
+                  (
+                    {
+                      Mon: "Monday",
+                      Tue: "Tuesday",
+                      Wed: "Wednesday",
+                      Thu: "Thursday",
+                      Fri: "Friday",
+                      Sat: "Saturday",
+                      Sun: "Sunday",
+                    } as Record<string, string>
+                  )[d]
+                }
+                <span>{sessions.filter((s) => s.dayId === d).length}</span>
+              </button>
+            ))}
+          </div>
+          {moving && (
+            <div className="notice flex-between">
+              <span>
+                Choose an empty cell to move this class, or an occupied cell to
+                swap.
+              </span>
+              <button className="btn text-btn" onClick={() => setMoving(null)}>
+                Cancel move
+              </button>
+            </div>
+          )}
+          {!p.rooms.length ? (
+            <Empty
+              title="A clear week starts here"
+              description="Add departments, subjects, teachers and rooms, then generate your first university timetable."
+            />
+          ) : (
+            <div className="timetable-scroll">
+              <table className="timetable">
+                <colgroup>
+                  <col style={{ width: 145 }} />
+                  {p.settings.slots.map((s) => (
+                    <col
+                      key={s.id}
+                      style={{
+                        minWidth: mergedBreakSlots.has(s.id) ? 85 : 190,
+                        width: mergedBreakSlots.has(s.id) ? 85 : 210,
+                      }}
+                    />
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRooms.map((room, roomIndex) => (
-                  <tr key={room.id} data-room-id={room.id}>
+                </colgroup>
+                <thead>
+                  <tr>
                     <th>
-                      <strong>{room.name}</strong>
-                      <span>{room.type}</span>
+                      <span className="room-header">ROOM / VENUE</span>
+                      <span className="muted small">{activeDay}</span>
                     </th>
-                    {p.settings.slots.map((slot) => {
-                      if (mergedBreakSlots.has(slot.id))
-                        return roomIndex === 0 ? (
+                    {p.settings.slots.map((slot) => (
+                      <th
+                        className={slot.isBreak ? "break-head" : ""}
+                        key={slot.id}
+                      >
+                        <Clock3 size={12} />
+                        <span>
+                          {slot.start} – {slot.end}
+                        </span>
+                        <small>
+                          {slot.isBreak ? "UNIVERSITY BREAK" : "TEACHING SLOT"}
+                        </small>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRooms.map((room, roomIndex) => (
+                    <tr key={room.id} data-room-id={room.id}>
+                      <th>
+                        <strong>{room.name}</strong>
+                        <span>{room.type}</span>
+                      </th>
+                      {p.settings.slots.map((slot) => {
+                        if (mergedBreakSlots.has(slot.id))
+                          return roomIndex === 0 ? (
+                            <td
+                              key={slot.id}
+                              rowSpan={visibleRooms.length}
+                              data-break-slot={slot.id}
+                              className={`break-cell merged-break-cell ${target === `break-${slot.id}` ? "drop-target" : ""}`}
+                              onDragOver={(e) => {
+                                if (!readOnly) {
+                                  e.preventDefault();
+                                  setTarget(`break-${slot.id}`);
+                                }
+                              }}
+                              onDragLeave={() => setTarget(null)}
+                              onDrop={(e) => dropIntoBreak(e, slot.id)}
+                            >
+                              <span className="break-label">Break</span>
+                              <button
+                                className="merged-break-target"
+                                disabled={!moving || readOnly}
+                                aria-label={`Move class into break ${slot.start} ${slot.end}`}
+                                onClick={() =>
+                                  moving &&
+                                  setBreakMove({
+                                    source: moving,
+                                    slotId: slot.id,
+                                    dayId: activeDay,
+                                  })
+                                }
+                              >
+                                {moving && <small>Choose room</small>}
+                              </button>
+                            </td>
+                          ) : null;
+                        const to = {
+                            dayId: activeDay,
+                            slotId: slot.id,
+                            roomId: room.id,
+                          },
+                          key = `${room.id}-${slot.id}`,
+                          ss = sessions.filter(
+                            (s) =>
+                              s.roomId === room.id &&
+                              s.dayId === activeDay &&
+                              s.slotId === slot.id,
+                          );
+                        return (
                           <td
                             key={slot.id}
-                            rowSpan={visibleRooms.length}
-                            data-break-slot={slot.id}
-                            className={`break-cell merged-break-cell ${target === `break-${slot.id}` ? "drop-target" : ""}`}
+                            data-slot-id={slot.id}
+                            className={`${slot.isBreak ? "break-cell" : ""} ${target === key ? "drop-target" : ""} ${moving ? "move-mode" : ""}`}
                             onDragOver={(e) => {
                               if (!readOnly) {
                                 e.preventDefault();
-                                setTarget(`break-${slot.id}`);
+                                setTarget(key);
                               }
                             }}
                             onDragLeave={() => setTarget(null)}
-                            onDrop={(e) => dropIntoBreak(e, slot.id)}
-                          >
-                            <span className="break-label">Break</span>
-                            <button
-                              className="merged-break-target"
-                              disabled={!moving || readOnly}
-                              aria-label={`Move class into break ${slot.start} ${slot.end}`}
-                              onClick={() =>
-                                moving &&
-                                setBreakMove({
-                                  source: moving,
-                                  slotId: slot.id,
-                                  dayId: activeDay,
-                                })
-                              }
-                            >
-                              {moving && <small>Choose room</small>}
-                            </button>
-                          </td>
-                        ) : null;
-                      const to = {
-                          dayId: activeDay,
-                          slotId: slot.id,
-                          roomId: room.id,
-                        },
-                        key = `${room.id}-${slot.id}`,
-                        ss = sessions.filter(
-                          (s) =>
-                            s.roomId === room.id &&
-                            s.dayId === activeDay &&
-                            s.slotId === slot.id,
-                        );
-                      return (
-                        <td
-                          key={slot.id}
-                          className={`${slot.isBreak ? "break-cell" : ""} ${target === key ? "drop-target" : ""} ${moving ? "move-mode" : ""}`}
-                          onDragOver={(e) => {
-                            if (!readOnly) {
+                            onDrop={(e) => {
                               e.preventDefault();
-                              setTarget(key);
-                            }
-                          }}
-                          onDragLeave={() => setTarget(null)}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            const id = e.dataTransfer.getData("text/plain");
-                            if (id && !readOnly) place(id, to);
-                          }}
-                        >
-                          <>
-                            {ss.map((s) => {
-                              const sub = subject(s),
-                                color = subjectColor(sub?.code || ""),
-                                warnings = issues.filter((i) =>
-                                  i.sessionIds.includes(s.id),
-                                );
-                              return (
-                                <button
-                                  data-session={s.id}
-                                  key={s.id}
-                                  className={`class-card ${initialSessionId === s.id ? "inspected" : ""} ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
-                                  style={
-                                    {
-                                      "--card-color": color,
-                                    } as React.CSSProperties
-                                  }
-                                  draggable={!readOnly && !s.locked}
-                                  onDragStart={(e) => {
-                                    e.dataTransfer.setData("text/plain", s.id);
-                                    setDragging(s.id);
-                                  }}
-                                  onDragEnd={() => {
-                                    setDragging(null);
-                                    setTarget(null);
-                                  }}
-                                  onClick={() =>
-                                    moving
-                                      ? place(moving, to)
-                                      : setEditing(s.id)
-                                  }
-                                  aria-label={`${sub?.name}, ${p.teachers.find((t) => t.id === s.teacherId)?.name}, ${groupLabel(p, s.teachingGroupId)}`}
-                                  title={
-                                    warnings.length
-                                      ? warnings
-                                          .map((i) => i.message)
-                                          .join("\n")
-                                      : "Click to edit · drag to move or swap"
-                                  }
-                                >
-                                  <div className="class-card-top">
-                                    <span>{sub?.code}</span>
-                                    <div>
-                                      {s.locked ? (
-                                        <LockKeyhole size={13} />
-                                      ) : (
-                                        <GripVertical size={13} />
-                                      )}{" "}
-                                      {!!warnings.length && (
-                                        <TriangleAlert size={14} />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <strong>{sub?.name}</strong>
-                                  <span className="class-groups">
-                                    {groupLabel(p, s.teachingGroupId)}
-                                  </span>
-                                  <span className="class-teacher">
-                                    {
-                                      p.teachers.find(
-                                        (t) => t.id === s.teacherId,
-                                      )?.name
+                              const id = e.dataTransfer.getData("text/plain");
+                              if (id && !readOnly) place(id, to);
+                            }}
+                          >
+                            <>
+                              {ss.map((s) => {
+                                const sub = subject(s),
+                                  color = subjectColor(sub?.code || ""),
+                                  warnings = issues.filter((i) =>
+                                    i.sessionIds.includes(s.id),
+                                  );
+                                return (
+                                  <button
+                                    data-session={s.id}
+                                    key={s.id}
+                                    className={`class-card ${initialSessionId === s.id ? "inspected" : ""} ${warned.has(s.id) ? "has-warning" : ""} ${dragging === s.id ? "dragging" : ""}`}
+                                    style={
+                                      {
+                                        "--card-color": color,
+                                      } as React.CSSProperties
                                     }
-                                  </span>
-                                  {s.note && (
-                                    <span className="class-note">{s.note}</span>
+                                    draggable={!readOnly && !s.locked}
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData(
+                                        "text/plain",
+                                        s.id,
+                                      );
+                                      setDragging(s.id);
+                                    }}
+                                    onDragEnd={() => {
+                                      setDragging(null);
+                                      setTarget(null);
+                                    }}
+                                    onClick={() =>
+                                      moving
+                                        ? place(moving, to)
+                                        : setEditing(s.id)
+                                    }
+                                    aria-label={`${sub?.name}, ${p.teachers.find((t) => t.id === s.teacherId)?.name}, ${groupLabel(p, s.teachingGroupId)}`}
+                                    title={
+                                      warnings.length
+                                        ? warnings
+                                            .map((i) => i.message)
+                                            .join("\n")
+                                        : "Click to edit · drag to move or swap"
+                                    }
+                                  >
+                                    <div className="class-card-top">
+                                      <span>{sub?.code}</span>
+                                      <div>
+                                        {s.locked ? (
+                                          <LockKeyhole size={13} />
+                                        ) : (
+                                          <GripVertical size={13} />
+                                        )}{" "}
+                                        {!!warnings.length && (
+                                          <TriangleAlert size={14} />
+                                        )}
+                                      </div>
+                                    </div>
+                                    <strong>{sub?.name}</strong>
+                                    <span className="class-groups">
+                                      {groupLabel(p, s.teachingGroupId)}
+                                    </span>
+                                    <span className="class-teacher">
+                                      {
+                                        p.teachers.find(
+                                          (t) => t.id === s.teacherId,
+                                        )?.name
+                                      }
+                                    </span>
+                                    {s.note && (
+                                      <span className="class-note">
+                                        {s.note}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                              {!ss.length && (
+                                <button
+                                  className="empty-cell"
+                                  disabled={!moving || readOnly}
+                                  onClick={() => moving && place(moving, to)}
+                                  aria-label={`Move to ${room.name} ${activeDay} ${slot.start}`}
+                                >
+                                  {moving ? (
+                                    <ArrowUpRight size={20} />
+                                  ) : (
+                                    <span>—</span>
                                   )}
                                 </button>
-                              );
-                            })}
-                            {!ss.length && (
-                              <button
-                                className="empty-cell"
-                                disabled={!moving || readOnly}
-                                onClick={() => moving && place(moving, to)}
-                                aria-label={`Move to ${room.name} ${activeDay} ${slot.start}`}
-                              >
-                                {moving ? (
-                                  <ArrowUpRight size={20} />
-                                ) : (
-                                  <span>—</span>
-                                )}
-                              </button>
-                            )}
-                          </>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                              )}
+                            </>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="timetable-footer">
+            <span>
+              <MousePointer2 size={14} /> Click a class to edit. Drag to move or
+              swap. Unscheduled classes are placed as new classes.
+            </span>
+            <span>
+              <span className="dot green-dot" /> Autosaved on this browser
+            </span>
           </div>
-        )}
-        <div className="timetable-footer">
-          <span>
-            <MousePointer2 size={14} /> Click a class to edit. Drag to move or
-            swap.
-          </span>
-          <span>
-            <span className="dot green-dot" /> Autosaved on this browser
-          </span>
-        </div>
-      </section>
+        </section>
+      </div>
       <div className="bottom-notes">
         <div>
           <span className="avatar color-0">
@@ -601,6 +634,17 @@ export function TimetablePanel({
           </div>
         </div>
       </div>
+      {pendingPlacement && (
+        <ManualClassPlacement
+          key={`${pendingPlacement.groupId}-${pendingPlacement.to.dayId}-${pendingPlacement.to.slotId}-${pendingPlacement.to.roomId}`}
+          project={p}
+          groupId={pendingPlacement.groupId}
+          to={pendingPlacement.to}
+          readOnly={readOnly}
+          onSave={onChange}
+          onClose={() => setPendingPlacement(null)}
+        />
+      )}
       {editing && (
         <SessionEditor
           project={p}

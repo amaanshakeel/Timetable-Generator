@@ -13,6 +13,9 @@ test("class teacher choices follow subject eligibility", async ({ page }) => {
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   await page.locator("[data-session]").first().click();

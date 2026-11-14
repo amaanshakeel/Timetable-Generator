@@ -17,6 +17,9 @@ test("saved timetable storage retains generated versions and supports viewing an
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   await expect(
@@ -24,6 +27,9 @@ test("saved timetable storage retains generated versions and supports viewing an
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Apply timetable", exact: true })
@@ -97,13 +103,11 @@ test("viewing retained timetables does not overwrite deletion recovery", async (
   imported.sessions[0].note = "Recover this deleted version";
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /^Dashboard/ })).toBeVisible();
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "library.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(imported)),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "library.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(imported)),
+  });
   await page
     .getByRole("button", { name: "Import project", exact: true })
     .click();

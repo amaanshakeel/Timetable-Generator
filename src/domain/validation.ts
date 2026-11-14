@@ -10,6 +10,7 @@ const baseProjectSchema = z.object({
   schemaVersion: z.literal(1),
   revision: z.number().int().nonnegative(),
   savedAt: z.string(),
+  manualWorkspace: z.boolean().optional(),
   settings: z.object({
     university: name,
     term: name,

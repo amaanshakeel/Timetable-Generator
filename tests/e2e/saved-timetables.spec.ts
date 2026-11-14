@@ -16,6 +16,9 @@ test("creates another timetable with the same setup and switches without losing 
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   const first = page.locator("[data-session]").first();
@@ -37,6 +40,9 @@ test("creates another timetable with the same setup and switches without losing 
     .getByRole("button", { name: "Generate new timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Keep current timetable", exact: true })
     .click();
   await expect(
@@ -53,6 +59,9 @@ test("creates another timetable with the same setup and switches without losing 
     .fill("Alternative plan");
   await page
     .getByRole("button", { name: "Generate new timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Apply timetable", exact: true })
@@ -114,6 +123,9 @@ test("unfinished original setup and class drafts remain available after switchin
     .getByRole("button", { name: "Generate timetable", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Apply timetable", exact: true })
     .click();
   const id = await page
@@ -140,6 +152,9 @@ test("unfinished original setup and class drafts remain available after switchin
     .click();
   await page
     .getByRole("button", { name: "Generate new timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Apply timetable", exact: true })
@@ -181,6 +196,9 @@ test("recovers class drafts saved by the previous app version", async ({
     .click();
   await page
     .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Generate Automatically", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Apply timetable", exact: true })

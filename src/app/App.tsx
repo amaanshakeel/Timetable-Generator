@@ -1,3 +1,4 @@
+import { createManualTimetable } from "../domain/manual";
 import { SavedTimetables } from "../features/timetable/SavedTimetables";
 import {
   useEffect,
@@ -123,7 +124,9 @@ export default function App() {
     [savedTimetablesOpen, setSavedTimetablesOpen] = useState(false),
     [newTimetableName, setNewTimetableName] = useState(""),
     [newTimetableError, setNewTimetableError] = useState(""),
-    [generationName, setGenerationName] = useState<string | null>(null);
+    [generationName, setGenerationName] = useState<string | null>(null),
+    [creationMethodOpen, setCreationMethodOpen] = useState(false),
+    [creationMethodName, setCreationMethodName] = useState<string | null>(null);
   const worker = useRef<Worker | null>(null),
     runId = useRef(""),
     input = useRef<HTMLInputElement>(null);
@@ -169,7 +172,9 @@ export default function App() {
     }
   }
   function generate() {
-    runGeneration(p, null);
+    if (state.readOnly) return;
+    setCreationMethodName(null);
+    setCreationMethodOpen(true);
   }
   function runGeneration(source: Project, name: string | null) {
     if (state.readOnly) return;
@@ -559,6 +564,68 @@ export default function App() {
           }}
         />
       )}
+      {creationMethodOpen && (
+        <Modal
+          title="How would you like to create the timetable?"
+          onClose={() => setCreationMethodOpen(false)}
+        >
+          <div className="modal-body creation-methods">
+            <p className="muted">
+              Both options open an editable workspace with drag-and-drop classes
+              and live clash warnings.
+            </p>
+            <button
+              className="btn secondary"
+              disabled={state.readOnly}
+              onClick={() => {
+                try {
+                  if (
+                    state.update(
+                      createManualTimetable(
+                        p,
+                        creationMethodName || nextTimetableName(p),
+                      ),
+                    )
+                  ) {
+                    setCreationMethodOpen(false);
+                    setInspected(undefined);
+                    setInspectedOffering(undefined);
+                    setFilter({});
+                    setPage("timetable");
+                  }
+                } catch (error) {
+                  state.setError((error as Error).message);
+                }
+              }}
+            >
+              Create Manually
+            </button>
+            <p className="small muted">
+              Start with an empty grid and place classes from the unscheduled
+              list. Existing timetables stay saved.
+            </p>
+            <button
+              className="btn primary"
+              disabled={state.readOnly}
+              onClick={() => {
+                setCreationMethodOpen(false);
+                runGeneration(
+                  creationMethodName
+                    ? { ...p, sessions: [], teachingGroups: [] }
+                    : p,
+                  creationMethodName,
+                );
+              }}
+            >
+              Generate Automatically
+            </button>
+            <p className="small muted">
+              Generate from teacher and room availability, review the result,
+              then drag or edit classes as needed.
+            </p>
+          </div>
+        </Modal>
+      )}
       {newTimetableOpen && (
         <Modal
           title="Create new timetable"
@@ -581,7 +648,8 @@ export default function App() {
                 return;
               }
               setNewTimetableOpen(false);
-              runGeneration({ ...p, sessions: [], teachingGroups: [] }, name);
+              setCreationMethodName(name);
+              setCreationMethodOpen(true);
             }}
           >
             <Field label="Timetable name">
@@ -595,8 +663,8 @@ export default function App() {
             <p className="notice">
               The new timetable uses a copy of your current departments,
               subjects, teachers, rooms, availability and settings. Your
-              existing timetable, notes and locks stay saved separately. Review
-              the generated result before creating it.
+              existing timetable, notes and locks stay saved separately. Choose
+              manual or automatic creation next.
             </p>
           </Form>
         </Modal>
@@ -739,21 +807,19 @@ export default function App() {
               className="btn primary"
               disabled={state.readOnly || result.inputRevision !== p.revision}
               onClick={() => {
-                if (
-                  state.update(
-                    generationName || p.sessions.length > 0
-                      ? createTimetable(
-                          p,
-                          generationName || nextTimetableName(p),
-                          result,
-                        )
-                      : {
-                          ...p,
-                          teachingGroups: result.teachingGroups,
-                          sessions: result.sessions,
-                        },
-                  )
-                ) {
+                const candidate =
+                  generationName || p.sessions.length > 0
+                    ? createTimetable(
+                        p,
+                        generationName || nextTimetableName(p),
+                        result,
+                      )
+                    : {
+                        ...p,
+                        teachingGroups: result.teachingGroups,
+                        sessions: result.sessions,
+                      };
+                if (state.update({ ...candidate, manualWorkspace: false })) {
                   setResult(null);
                   setInspected(undefined);
                   setInspectedOffering(undefined);
