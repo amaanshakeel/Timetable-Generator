@@ -82,3 +82,65 @@ export function timetableDraftId(p: Project) {
     ? `${p.id}-${p.activeTimetableId}`
     : p.id;
 }
+
+export function nextTimetableName(p: Project) {
+  let n = timetableOptions(p).length + 1;
+  while (
+    timetableOptions(p).some((t) => t.name.toLowerCase() === `timetable ${n}`)
+  )
+    n++;
+  return `Timetable ${n}`;
+}
+export function deleteTimetable(p: Project, id: string): Project {
+  const active = p.activeTimetableId || p.id;
+  if (id !== active) {
+    if (!p.savedTimetables?.some((t) => t.id === id))
+      throw Error("This timetable could not be found.");
+    return {
+      ...p,
+      savedTimetables: p.savedTimetables.filter((t) => t.id !== id),
+    };
+  }
+  if (p.savedTimetables?.length) {
+    const next = switchTimetable(p, p.savedTimetables[0].id);
+    return {
+      ...next,
+      savedTimetables: next.savedTimetables!.filter((t) => t.id !== id),
+    };
+  }
+  return {
+    ...p,
+    sessions: [],
+    teachingGroups: [],
+    activeTimetableId: undefined,
+    timetableName: undefined,
+    savedTimetables: undefined,
+  };
+}
+export function savedTimetableSummaries(p: Project) {
+  return [
+    ...(p.sessions.length || p.activeTimetableId
+      ? [
+          {
+            id: p.activeTimetableId || p.id,
+            name: p.timetableName || "Timetable 1",
+            term: p.settings.term,
+            classes: p.sessions.length,
+            active: true,
+          },
+        ]
+      : []),
+    ...(p.savedTimetables || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      term: t.settings.term,
+      classes: t.sessions.length,
+      active: false,
+    })),
+  ];
+}
+
+export function hasRemovedTimetable(previous: Project, next: Project) {
+  const retained = new Set(savedTimetableSummaries(next).map((t) => t.id));
+  return savedTimetableSummaries(previous).some((t) => !retained.has(t.id));
+}

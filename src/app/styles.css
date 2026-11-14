@@ -3107,3 +3107,43 @@ hr {
     width: 100%;
   }
 }
+
+.saved-timetable-list {
+  margin-top: 20px;
+}
+.saved-timetable-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+}
+.saved-timetable-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  color: var(--navy);
+}
+.saved-timetable-info strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.saved-timetable-info small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+.saved-timetable-row > .filter-row {
+  flex-shrink: 0;
+}
+@media (max-width: 550px) {
+  .saved-timetable-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .saved-timetable-row > .filter-row {
+    align-self: flex-end;
+  }
+}

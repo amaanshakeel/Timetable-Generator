@@ -4,6 +4,8 @@ import {
   createTimetable,
   switchTimetable,
   timetableDraftId,
+  deleteTimetable,
+  hasRemovedTimetable,
 } from "../../src/domain/timetables";
 import { validateProject } from "../../src/domain/validation";
 
@@ -54,4 +56,38 @@ describe("saved timetables", () => {
       createTimetable(p, "Timetable 1", { teachingGroups: [], sessions: [] }),
     ).toThrow(/name/i);
   });
+});
+
+it("deletes saved or active timetables without losing the remaining setup", () => {
+  const p = createTimetable(fixture(), "Alternative", {
+    teachingGroups: [],
+    sessions: [],
+  });
+  const originalId = p.savedTimetables![0].id;
+  expect(deleteTimetable(p, originalId).savedTimetables).toHaveLength(0);
+  const next = deleteTimetable(p, p.activeTimetableId!);
+  expect(next.activeTimetableId).toBe(originalId);
+  expect(next.sessions).toHaveLength(2);
+  expect(next.savedTimetables).toHaveLength(0);
+  const empty = deleteTimetable(next, originalId);
+  expect(empty.sessions).toHaveLength(0);
+  expect(empty.teachingGroups).toHaveLength(0);
+  expect(empty.departments).toEqual(p.departments);
+  expect(validateProject(empty).ok).toBe(true);
+});
+
+it("detects removal of an active version even when all class IDs are shared", () => {
+  const original = fixture();
+  const next = createTimetable(original, "Alternative", original);
+  next.sessions[0].note = "Different version with the same class IDs";
+  expect(hasRemovedTimetable(original, next)).toBe(false);
+  expect(hasRemovedTimetable(next, switchTimetable(next, original.id))).toBe(
+    false,
+  );
+  expect(
+    hasRemovedTimetable(next, deleteTimetable(next, next.activeTimetableId!)),
+  ).toBe(true);
+  expect(hasRemovedTimetable(next, deleteTimetable(next, original.id))).toBe(
+    true,
+  );
 });

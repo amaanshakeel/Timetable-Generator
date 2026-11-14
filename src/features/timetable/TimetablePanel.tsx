@@ -45,6 +45,7 @@ export function TimetablePanel({
   onGenerate,
   onCreateNew,
   onSelectTimetable,
+  onOpenSaved,
   readOnly,
   issues,
   onError,
@@ -57,6 +58,7 @@ export function TimetablePanel({
   onGenerate: () => void;
   onCreateNew: () => void;
   onSelectTimetable: (id: string) => void;
+  onOpenSaved: () => void;
   readOnly: boolean;
   issues: Issue[];
   onError: (s: string) => void;
@@ -170,6 +172,9 @@ export function TimetablePanel({
           </p>
         </div>
         <div className="filter-row timetable-heading-actions">
+          <button className="btn secondary" onClick={onOpenSaved}>
+            Saved timetables
+          </button>
           {(p.sessions.length > 0 || !!p.savedTimetables?.length) && (
             <button
               className="btn secondary"

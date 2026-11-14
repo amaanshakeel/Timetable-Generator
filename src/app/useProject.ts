@@ -1,3 +1,4 @@
+import { hasRemovedTimetable } from "../domain/timetables";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { emptyProject, type Project } from "../domain/types";
 import { validateProject } from "../domain/validation";
@@ -135,19 +136,26 @@ export function useProject() {
         savedAt: new Date().toISOString(),
       };
       const previous = current.current;
+      const sameTimetable =
+        (previous.activeTimetableId || previous.id) ===
+        (p.activeTimetableId || p.id);
       const destructive =
-        previous.sessions.some((s) => !p.sessions.some((n) => n.id === s.id)) ||
-        previous.offerings.some(
-          (o) => !p.offerings.some((n) => n.id === o.id),
-        ) ||
-        previous.teachingGroups.some((g) =>
-          g.offeringIds.some(
-            (id) =>
-              !p.teachingGroups
-                .find((n) => n.id === g.id)
-                ?.offeringIds.includes(id),
-          ),
-        );
+        hasRemovedTimetable(previous, p) ||
+        (sameTimetable &&
+          (previous.sessions.some(
+            (s) => !p.sessions.some((n) => n.id === s.id),
+          ) ||
+            previous.offerings.some(
+              (o) => !p.offerings.some((n) => n.id === o.id),
+            ) ||
+            previous.teachingGroups.some((g) =>
+              g.offeringIds.some(
+                (id) =>
+                  !p.teachingGroups
+                    .find((n) => n.id === g.id)
+                    ?.offeringIds.includes(id),
+              ),
+            )));
       current.current = p;
       setProject(p);
       persist(p, destructive);

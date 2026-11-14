@@ -77,3 +77,12 @@ Once a timetable exists, Create new timetable generates a named alternative from
 Review identified unstable draft identities for the original timetable and class forms. Stable timetable/session keys, revision-based draft review, legacy class-draft migration and missing-group/lock guards address this. Browser regressions cover saved notes/locks, cancellation, switching, reload, actual backup download, unfinished setup/class drafts after switching, and previous-version draft migration. No material review findings remain.
 
 Final validation: TypeScript, all 32 unit/integration tests, all 23 browser workflows, and production build passed. Inspected desktop/mobile selector layouts with no horizontal page overflow. One export unit test initially exceeded its timeout during concurrent build/browser load; the complete unit suite passed when rerun alone (including that export test).
+
+
+## Saved timetable storage and deletion (2026-11-14)
+
+Saved timetables now lists each stored version with its name, term, class count, active status, View and Delete actions. Applying regeneration retains the previous generated version automatically. Deletion requires confirmation, supports Undo and archives a recovery snapshot. Active deletion opens another retained timetable; deleting the final schedule keeps setup data.
+
+Review exposed two recovery edge cases with shared record IDs and delete-then-view operations. Timetable identity removal now triggers archival, while ordinary switching does not overwrite deletion recovery. A browser regression verifies the actual IndexedDB recovery entry after deletion and switching. Final review found no remaining material findings.
+
+Final checks passed: TypeScript, all 34 unit/integration tests, all 25 browser workflows and production build. Desktop/mobile storage-list layouts were inspected. After interruption the preview server was absent; the first browser rerun failed on connection refusal. The server was restarted using the approved execution fallback after a sandbox Windows logon error, and the full browser suite then passed.

@@ -1,3 +1,4 @@
+import { SavedTimetables } from "../features/timetable/SavedTimetables";
 import {
   useEffect,
   useMemo,
@@ -49,6 +50,8 @@ import {
   createTimetable,
   switchTimetable,
   timetableOptions,
+  deleteTimetable,
+  nextTimetableName,
 } from "../domain/timetables";
 import { Modal, Confirm, Form, Field } from "../components/ui";
 import type { GenerationResult, Progress } from "../scheduler/search";
@@ -117,6 +120,7 @@ export default function App() {
     [progress, setProgress] = useState<Progress | null>(null),
     [generating, setGenerating] = useState(false),
     [newTimetableOpen, setNewTimetableOpen] = useState(false),
+    [savedTimetablesOpen, setSavedTimetablesOpen] = useState(false),
     [newTimetableName, setNewTimetableName] = useState(""),
     [newTimetableError, setNewTimetableError] = useState(""),
     [generationName, setGenerationName] = useState<string | null>(null);
@@ -148,12 +152,7 @@ export default function App() {
   }
   function openNewTimetable() {
     if (state.readOnly) return;
-    let n = timetableOptions(p).length + 1;
-    while (
-      timetableOptions(p).some((t) => t.name.toLowerCase() === `timetable ${n}`)
-    )
-      n++;
-    setNewTimetableName(`Timetable ${n}`);
+    setNewTimetableName(nextTimetableName(p));
     setNewTimetableError("");
     setNewTimetableOpen(true);
   }
@@ -437,6 +436,7 @@ export default function App() {
                 onGenerate={generate}
                 onCreateNew={openNewTimetable}
                 onSelectTimetable={selectTimetable}
+                onOpenSaved={() => setSavedTimetablesOpen(true)}
                 readOnly={state.readOnly}
                 issues={issues}
                 onError={state.setError}
@@ -533,6 +533,31 @@ export default function App() {
             </span>
           </div>
         </Modal>
+      )}
+      {savedTimetablesOpen && (
+        <SavedTimetables
+          project={p}
+          readOnly={state.readOnly}
+          onClose={() => setSavedTimetablesOpen(false)}
+          onSelect={(id) => {
+            selectTimetable(id);
+            setSavedTimetablesOpen(false);
+          }}
+          onDelete={(id) => {
+            try {
+              const applied = state.update(deleteTimetable(p, id));
+              if (applied) {
+                setInspected(undefined);
+                setInspectedOffering(undefined);
+                setFilter({});
+              }
+              return applied;
+            } catch (error) {
+              state.setError((error as Error).message);
+              return false;
+            }
+          }}
+        />
       )}
       {newTimetableOpen && (
         <Modal
@@ -700,7 +725,9 @@ export default function App() {
             <p className="notice">
               {generationName
                 ? "Applying saves a separate timetable using the copied setup. Your previous timetable stays available."
-                : "Applying replaces the unlocked schedule. You can undo the entire change."}{" "}
+                : p.sessions.length > 0
+                  ? "Applying saves the generated timetable as a new version. Your previous timetable stays in Saved timetables."
+                  : "Applying saves your first timetable. You can undo the change."}{" "}
               Any remaining warnings will appear in Clashes & Issues.
             </p>
           </div>
@@ -714,8 +741,12 @@ export default function App() {
               onClick={() => {
                 if (
                   state.update(
-                    generationName
-                      ? createTimetable(p, generationName, result)
+                    generationName || p.sessions.length > 0
+                      ? createTimetable(
+                          p,
+                          generationName || nextTimetableName(p),
+                          result,
+                        )
                       : {
                           ...p,
                           teachingGroups: result.teachingGroups,

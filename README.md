@@ -27,6 +27,8 @@ Open the Local URL printed by Vite. If Windows blocks `npm.ps1`, use `npm.cmd`. 
 
 Combined classes appear once and retain all attending groups. Their teacher workload counts once per session. Different groups can have the same teacher at different times. Room type and availability determine suitability; student counts and room capacity are intentionally excluded.
 
+Open **Saved timetables** from the timetable screen to view or delete stored versions. Applying a regenerated timetable keeps the previous version in this list. Deletion asks for confirmation and supports Undo; deleting the last timetable keeps its setup available for future generation. Storage is local to this browser, and JSON backups include all stored versions.
+
 ## Saving and backups
 
 Applied edits save automatically to IndexedDB. Unfinished forms have local drafts, scoped to the project and tab. Reopening automatically restores the saved workspace and last selected view. Older drafts require review when newer changes exist. Settings contains Import backup, Restore previous snapshot, Load sample data, and Reset workspace; replacing/resetting data retains a recovery snapshot. Undo/redo is available during the current session.
