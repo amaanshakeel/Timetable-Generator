@@ -1,3 +1,4 @@
+import { hasTimetableToCheck } from "../../domain/issues";
 import { TriangleAlert, CheckCircle2, Users, Clock3 } from "lucide-react";
 import type { Project, Issue } from "../../domain/types";
 import { Empty } from "../../components/ui";
@@ -30,8 +31,16 @@ export function IssuesPanel({
       <div className="panel">
         {!issues.length ? (
           <Empty
-            title="Everything is in harmony"
-            description="No clashes or unmet requirements found in your current setup."
+            title={
+              hasTimetableToCheck(p)
+                ? "Everything is in harmony"
+                : "No timetable to check"
+            }
+            description={
+              hasTimetableToCheck(p)
+                ? "No clashes or unmet requirements found in the active timetable."
+                : "Generate a timetable or start a manual workspace to check current classes. Previous and deleted timetables are not included."
+            }
           />
         ) : (
           <>
@@ -52,7 +61,9 @@ export function IssuesPanel({
                   </span>
                   <div>
                     <span className="issue-type">
-                      {i.kind.replaceAll("-", " ")}
+                      {i.kind === "requirement"
+                        ? "Unscheduled requirement"
+                        : i.kind.replaceAll("-", " ")}
                     </span>
                     <h3>{i.message}</h3>
                     {i.sessionIds.length > 0 && (

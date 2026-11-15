@@ -8,6 +8,13 @@ import {
   selectSessions,
 } from "../../src/domain/editing";
 describe("project integrity", () => {
+  it("does not report setup requirements as clashes before any timetable exists", () => {
+    const p = fixture();
+    p.sessions = [];
+    p.teachingGroups = [];
+    expect(findIssues(p)).toEqual([]);
+  });
+
   it("retains explicit department semesters in backups and rejects incompatible offerings", () => {
     const p = fixture();
     const input = {

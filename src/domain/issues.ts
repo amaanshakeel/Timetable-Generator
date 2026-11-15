@@ -13,7 +13,17 @@ export function groupLabel(p: Project, groupId: string) {
       .join(", ") || "Unassigned group"
   );
 }
+export function hasTimetableToCheck(p: Project) {
+  return Boolean(
+    p.sessions.length ||
+    p.teachingGroups.length ||
+    p.activeTimetableId ||
+    p.manualWorkspace,
+  );
+}
 export function findIssues(p: Project): Issue[] {
+  // Setup records are retained after deletion, but are not a timetable to validate.
+  if (!hasTimetableToCheck(p)) return [];
   const issues: Issue[] = [];
   const add = (
     kind: string,

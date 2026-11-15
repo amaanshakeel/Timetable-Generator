@@ -1,3 +1,4 @@
+import { findIssues } from "../../src/domain/issues";
 import { describe, it, expect } from "vitest";
 import { fixture } from "../fixture";
 import {
@@ -90,4 +91,26 @@ it("detects removal of an active version even when all class IDs are shared", ()
   expect(hasRemovedTimetable(next, deleteTimetable(next, original.id))).toBe(
     true,
   );
+});
+
+it("checks only current placements and clears issues when the last timetable is deleted", () => {
+  const old = fixture();
+  old.sessions[1] = {
+    ...old.sessions[1],
+    dayId: old.sessions[0].dayId,
+    slotId: old.sessions[0].slotId,
+    roomId: old.sessions[0].roomId,
+  };
+  expect(findIssues(old).some((i) => i.kind === "room")).toBe(true);
+  const clear = createTimetable(old, "Current clean plan", fixture());
+  expect(findIssues(clear).some((i) => i.kind === "room")).toBe(false);
+  const oldOnly = deleteTimetable(clear, clear.activeTimetableId!);
+  expect(findIssues(oldOnly).some((i) => i.kind === "room")).toBe(true);
+  const deleted = deleteTimetable(oldOnly, oldOnly.activeTimetableId!);
+  expect(findIssues(deleted)).toEqual([]);
+  expect(
+    findIssues({ ...oldOnly, sessions: [] }).some(
+      (i) => i.kind === "requirement",
+    ),
+  ).toBe(true);
 });

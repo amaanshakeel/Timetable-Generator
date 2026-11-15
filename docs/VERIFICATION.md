@@ -95,3 +95,10 @@ Generate timetable now first offers Create Manually or Generate Automatically. B
 Manual workspace mode is saved in active/inactive snapshots and backups. New offerings are reconciled into manual groups without changing placed/locked records. Existing moves, swaps, edits and Undo preserve class notes. Review identified a note-discarding extra action and missing newly added offerings; the extra action was removed and reconciliation was added with regressions. No material findings remain.
 
 Checks: TypeScript, all 37 unit/integration tests, all 27 browser workflows and production build passed. After the final desktop layout refinement, both manual browser regressions, TypeScript and production build were rerun successfully. Desktop uses a side tray to avoid covering table headers; narrow screens use the stacked click-to-place layout, with no horizontal page overflow. Native drag events, live preview/red cells, note reload, new offerings and locked-note preservation were verified.
+
+
+## Current timetable issue checks (2026-11-15)
+
+Reproduced setup-only records generating 0-of-N weekly scheduling requirements before any timetable existed and after final timetable deletion. Those requirements appeared to be stale clashes, although they were recalculated from retained setup. Issue validation now runs only for an active schedule/workspace (including partial and manual schedules). The empty screen explicitly says No timetable to check; active missing-class items are labeled Unscheduled requirement. Archived schedules are excluded from current clash checks.
+
+Regressions cover setup-only records, archived/current clash isolation, final deletion, live clash resolution through the editor and reload after deletion. Both initial domain regressions failed before the fix. Final TypeScript, all 39 unit/integration tests, all 28 browser workflows and production build passed.

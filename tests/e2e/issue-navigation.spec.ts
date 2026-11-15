@@ -17,6 +17,12 @@ test("setup issues open the offering and scheduled clash badges open their timet
       { exact: true },
     ),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Generate timetable", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Create Manually", exact: true })
+    .click();
   await page.getByRole("button", { name: /^Clashes & Issues/ }).click();
   await page
     .getByRole("button", { name: "Setup", exact: true })
