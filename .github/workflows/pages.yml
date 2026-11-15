@@ -22,6 +22,7 @@ jobs:
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: npm run test:cloud
       - name: Set repository path
         run: |
           repo="${GITHUB_REPOSITORY#*/}"
@@ -31,6 +32,9 @@ jobs:
             echo "VITE_BASE=/$repo/" >> "$GITHUB_ENV"
           fi
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       - uses: actions/upload-pages-artifact@v4
         if: github.event_name != 'pull_request'
         with:

@@ -8,9 +8,11 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "check": "tsc -b && vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:cloud": "playwright test -c playwright.cloud.config.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
     "exceljs": "^4.4.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.468.0",

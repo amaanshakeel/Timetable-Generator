@@ -1,3 +1,5 @@
+import { useCloudBackups } from "../cloud/useCloudBackups";
+import { CloudBackupPanel } from "../cloud/CloudBackupPanel";
 import { createManualTimetable } from "../domain/manual";
 import { SavedTimetables } from "../features/timetable/SavedTimetables";
 import {
@@ -131,6 +133,7 @@ export default function App() {
     runId = useRef(""),
     input = useRef<HTMLInputElement>(null);
   const issues = useMemo(() => findIssues(p), [p]);
+  const cloud = useCloudBackups(p, state.ready, state.readOnly, state.status);
   useEffect(() => () => worker.current?.terminate(), []);
   useEffect(() => {
     try {
@@ -365,6 +368,22 @@ export default function App() {
               )}
               {state.status}
             </span>
+            {cloud.configured && cloud.user && cloud.enabled && (
+              <button
+                className={`cloud-status-link ${cloud.status === "error" ? "cloud-error" : ""}`}
+                onClick={() => navigate("settings")}
+                title={cloud.error || "Cloud backup status"}
+              >
+                Cloud:{" "}
+                {cloud.status === "saved"
+                  ? "Saved"
+                  : cloud.status === "error"
+                    ? "Needs attention"
+                    : cloud.status === "uploading"
+                      ? "Uploading"
+                      : "Pending"}
+              </button>
+            )}
             <span className="topbar-divider" />
             <button
               className="icon-btn"
@@ -465,17 +484,24 @@ export default function App() {
               />
             )}{" "}
             {page === "settings" && (
-              <SettingsPanel
-                onLoadSample={() => setSample(true)}
-                onImport={() => input.current?.click()}
-                onReset={() => setFresh(true)}
-                onRestore={state.restore}
-                key={p.id + (p.activeTimetableId || "") + state.formsEpoch}
-                project={p}
-                onChange={state.update}
-                readOnly={state.readOnly}
-                onError={state.setError}
-              />
+              <>
+                <SettingsPanel
+                  onLoadSample={() => setSample(true)}
+                  onImport={() => input.current?.click()}
+                  onReset={() => setFresh(true)}
+                  onRestore={state.restore}
+                  key={p.id + (p.activeTimetableId || "") + state.formsEpoch}
+                  project={p}
+                  onChange={state.update}
+                  readOnly={state.readOnly}
+                  onError={state.setError}
+                />
+                <CloudBackupPanel
+                  cloud={cloud}
+                  readOnly={state.readOnly}
+                  onRestore={setImported}
+                />
+              </>
             )}{" "}
             {page === "issues" && (
               <IssuesPanel

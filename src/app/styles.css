@@ -3261,3 +3261,84 @@ hr {
     position: static;
   }
 }
+
+.cloud-backup-panel {
+  margin-top: 24px;
+  padding: 24px;
+}
+.cloud-sign-in,
+.cloud-device-name {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+.cloud-sign-in label,
+.cloud-device-name label {
+  flex: 1;
+  min-width: 180px;
+  display: grid;
+  gap: 8px;
+}
+.cloud-enable {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 18px;
+}
+.cloud-version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.cloud-version > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cloud-version > .btn {
+  flex-shrink: 0;
+}
+@media (max-width: 550px) {
+  .cloud-backup-panel {
+    padding: 18px;
+  }
+  .cloud-version {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.cloud-status-link {
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-size: 10px;
+  padding: 5px;
+}
+.cloud-status-link.cloud-error {
+  color: var(--red);
+}
+@media (max-width: 550px) {
+  .cloud-status-link {
+    max-width: 75px;
+    font-size: 9px;
+  }
+}
+
+.cloud-backup-panel .flex-between {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cloud-backup-panel .flex-between p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cloud-status-link:hover {
+  background: var(--red);
+  color: #fff;
+  border-radius: 6px;
+}

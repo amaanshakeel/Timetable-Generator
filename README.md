@@ -62,7 +62,7 @@ For an existing compatible browser in a restricted environment, set `PLAYWRIGHT_
 
 The university should control the GitHub organization, repository, and deployment settings. Push the reviewed code to that repository's `main` branch and select **Settings → Pages → Source → GitHub Actions**. The included workflow verifies, tests, builds, and deploys static assets; it handles repository subpaths and `*.github.io` root repositories. Custom domains may need a `/` base override. No repository or remote deployment has been created automatically.
 
-Entered project data is never committed or uploaded by the application. No credentials, server, or login are needed for this release. Shared storage, authentication, and live collaboration require future backend work.
+Local timetable work requires no login and autosaves in this browser. Optional Supabase email sign-in enables private cloud backups; enable automatic backups or use Back up now in Settings. Restoring a version requires review and confirmation. Backups do not synchronize live edits between devices. See [Supabase setup](docs/SUPABASE_SETUP.md).
 
 ## Source and ownership
 

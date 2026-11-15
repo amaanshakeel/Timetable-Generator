@@ -102,3 +102,11 @@ Checks: TypeScript, all 37 unit/integration tests, all 27 browser workflows and 
 Reproduced setup-only records generating 0-of-N weekly scheduling requirements before any timetable existed and after final timetable deletion. Those requirements appeared to be stale clashes, although they were recalculated from retained setup. Issue validation now runs only for an active schedule/workspace (including partial and manual schedules). The empty screen explicitly says No timetable to check; active missing-class items are labeled Unscheduled requirement. Archived schedules are excluded from current clash checks.
 
 Regressions cover setup-only records, archived/current clash isolation, final deletion, live clash resolution through the editor and reload after deletion. Both initial domain regressions failed before the fix. Final TypeScript, all 39 unit/integration tests, all 28 browser workflows and production build passed.
+
+
+Supabase cloud backups verification (2026-11-16)
+- TypeScript check passed; 47 unit tests, 28 app browser tests and 4 isolated cloud browser tests passed. Production Vite build passed (existing large export chunks warning). Mobile cloud panel checked at 390px without horizontal page overflow.
+- User verified real email sign-in, upload, history and downloaded restore review in supplied project; schema installed manually and auth redirects saved. Anonymous table request denied. Live two-account isolation and advisor checks unavailable to connected management account.
+- Queue regression tests cover owner isolation, durable retry/reload, stale acknowledgments and failed workspace isolation. Mock browser transport never sends real email/data.
+- npm registry signatures verified for 341 packages, attestations for 76. Existing Vitest/tinypool and ExcelJS/uuid audit advisories remain; unrelated dependency upgrades were not included.
+- Public GitHub Actions variables configured; code not yet pushed. Production SMTP remains required for wider staff recipients.
