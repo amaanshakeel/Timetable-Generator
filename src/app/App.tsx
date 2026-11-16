@@ -30,6 +30,8 @@ import {
   ShieldCheck,
   Layers,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
   Upload,
   FileDown,
@@ -111,6 +113,13 @@ export default function App() {
     [inspectedOffering, setInspectedOffering] = useState<string | undefined>(),
     [filter, setFilter] = useState<TimetableFilter>({}),
     [mobile, setMobile] = useState(false),
+    [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+      try {
+        return localStorage.getItem("uor-sidebar-collapsed") === "true";
+      } catch {
+        return false;
+      }
+    }),
     [exporting, setExporting] = useState(false),
     [format, setFormat] = useState<"pdf" | "xlsx">("pdf"),
     [scope, setScope] = useState<"filtered" | "university">("university"),
@@ -254,7 +263,7 @@ export default function App() {
       </div>
     );
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <input
         ref={input}
         hidden
@@ -274,7 +283,10 @@ export default function App() {
           e.target.value = "";
         }}
       />
-      <aside className={`sidebar ${mobile ? "mobile-open" : ""}`}>
+      <aside
+        id="app-sidebar"
+        className={`sidebar ${mobile ? "mobile-open" : ""}`}
+      >
         <div className="brand">
           <img src={logo} alt="University of Rawalpindi" />
           <button
@@ -346,6 +358,33 @@ export default function App() {
             alt="University of Rawalpindi"
           />
           <div className="breadcrumb">
+            <button
+              className="icon-btn sidebar-toggle"
+              aria-label={
+                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              }
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!sidebarCollapsed}
+              aria-controls="app-sidebar"
+              onClick={() => {
+                const collapsed = !sidebarCollapsed;
+                setSidebarCollapsed(collapsed);
+                try {
+                  localStorage.setItem(
+                    "uor-sidebar-collapsed",
+                    String(collapsed),
+                  );
+                } catch {
+                  /* Keep the toggle usable when storage is unavailable. */
+                }
+              }}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen size={20} />
+              ) : (
+                <PanelLeftClose size={20} />
+              )}
+            </button>
             <button
               className="icon-btn menu-toggle"
               aria-label="Open navigation"

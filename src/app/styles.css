@@ -3342,3 +3342,36 @@ hr {
   color: #fff;
   border-radius: 6px;
 }
+
+/* Desktop sidebar preference is independent of the mobile drawer. */
+.sidebar-toggle {
+  flex-shrink: 0;
+}
+@media (min-width: 721px) {
+  .sidebar {
+    transition:
+      transform 180ms ease,
+      visibility 180ms;
+  }
+  .main-shell {
+    transition: margin-left 180ms ease;
+  }
+  .sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+  .sidebar-collapsed .main-shell {
+    margin-left: 0;
+  }
+}
+@media (max-width: 720px) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .main-shell {
+    transition: none;
+  }
+}
