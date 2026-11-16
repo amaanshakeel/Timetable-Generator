@@ -399,10 +399,23 @@ test("new projects do not inherit unfinished teacher forms from the previous pro
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page
-    .getByRole("button", { name: "Reset workspace", exact: true })
+    .getByRole("button", { name: "Clear all data", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Clear all data?", exact: true }),
+  ).toBeVisible();
+  const previousTerm = await page
+    .getByLabel("Academic term", { exact: true })
+    .inputValue();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page.getByLabel("Academic term", { exact: true })).toHaveValue(
+    previousTerm,
+  );
+  await page
+    .getByRole("button", { name: "Clear all data", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Reset workspace", exact: true })
+    .getByRole("button", { name: "Yes, clear all data", exact: true })
     .last()
     .click();
   await page.getByRole("button", { name: "Teachers", exact: true }).click();

@@ -313,6 +313,8 @@ export default function App() {
               {section && <div className="nav-section">{section}</div>}
               <button
                 className={`nav-item ${page === id ? "active" : ""}`}
+                aria-label={label}
+                title={sidebarCollapsed ? label : undefined}
                 onClick={() => navigate(id)}
               >
                 <Icon size={19} />
@@ -329,6 +331,7 @@ export default function App() {
           <button
             onClick={backup}
             className="sidebar-backup"
+            aria-label="Export backup"
             title="Your work saves automatically in this browser. Download a backup to keep a separate copy."
           >
             <Download size={15} />
@@ -1010,19 +1013,27 @@ export default function App() {
       )}
       {fresh && (
         <Confirm
-          title="Reset this workspace?"
-          action="Reset workspace"
+          title="Clear all data?"
+          action="Yes, clear all data"
           onClose={() => setFresh(false)}
           onConfirm={() => {
             void state.start();
             setFresh(false);
             setPage("settings");
             setFilter({});
+            setInspected(undefined);
+            setInspectedOffering(undefined);
           }}
         >
           <p>
-            Your current project will be retained as a recovery snapshot. Export
-            a backup if you want to keep a separate copy.
+            This clears all departments, subjects, teachers, rooms, scheduled
+            classes, saved timetables, and custom settings from this workspace.
+            You will start again with an empty workspace.
+          </p>
+          <p>
+            Export a backup first if you need a separate copy. A previous local
+            recovery snapshot and existing cloud backups remain available.
+            Cancel keeps your current data unchanged.
           </p>
         </Confirm>
       )}

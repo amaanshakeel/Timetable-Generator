@@ -3343,25 +3343,98 @@ hr {
   border-radius: 6px;
 }
 
-/* Desktop sidebar preference is independent of the mobile drawer. */
+/* Keep the expanded layout inside the rail so icons never jump. */
 .sidebar-toggle {
   flex-shrink: 0;
 }
+.sidebar {
+  --expanded-sidebar-width: 244px;
+}
+@media (max-width: 1200px) {
+  .sidebar {
+    --expanded-sidebar-width: 218px;
+  }
+}
+@media (max-width: 950px) {
+  .sidebar {
+    --expanded-sidebar-width: 195px;
+  }
+}
 @media (min-width: 721px) {
   .sidebar {
-    transition:
-      transform 180ms ease,
-      visibility 180ms;
+    transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .main-shell {
-    transition: margin-left 180ms ease;
+    transition: margin-left 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .sidebar-collapsed .sidebar {
-    transform: translateX(-100%);
-    visibility: hidden;
+    width: 64px;
   }
   .sidebar-collapsed .main-shell {
-    margin-left: 0;
+    margin-left: 64px;
+  }
+  .sidebar > .brand,
+  .sidebar > nav,
+  .sidebar > .sidebar-bottom {
+    width: var(--expanded-sidebar-width);
+    flex-shrink: 0;
+  }
+  .sidebar > .workspace-label {
+    width: calc(var(--expanded-sidebar-width) - 34px);
+  }
+  .sidebar-collapsed .sidebar .workspace-icon,
+  .sidebar-collapsed .sidebar .sidebar-backup,
+  .sidebar-collapsed .sidebar .brand,
+  .sidebar-collapsed .workspace-label > div,
+  .sidebar-collapsed .workspace-label .version,
+  .sidebar-collapsed .nav-section,
+  .sidebar-collapsed .nav-item > span,
+  .sidebar-collapsed .nav-item > svg:last-child:not(:first-child),
+  .sidebar-collapsed .sidebar-backup > span,
+  .sidebar-collapsed .sidebar-backup > svg:last-child,
+  .sidebar-collapsed .sidebar-foot {
+    visibility: hidden;
+  }
+  .sidebar .nav-item,
+  .sidebar .sidebar-backup {
+    white-space: nowrap;
+    overflow: hidden;
+    transition:
+      width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+  .sidebar svg {
+    flex-shrink: 0;
+  }
+  .sidebar-collapsed .sidebar nav {
+    width: var(--expanded-sidebar-width);
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .sidebar-collapsed .sidebar .nav-item {
+    position: relative;
+    width: 48px;
+    margin-left: 8px;
+  }
+  .sidebar-collapsed .sidebar .nav-item > svg:first-child {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    transform: translateY(-50%);
+  }
+  .sidebar-collapsed .sidebar .sidebar-backup {
+    width: 40px;
+  }
+  .sidebar-collapsed .sidebar .workspace-label {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .sidebar-collapsed .sidebar .sidebar-foot {
+    border-color: transparent;
   }
 }
 @media (max-width: 720px) {
@@ -3371,7 +3444,20 @@ hr {
 }
 @media (prefers-reduced-motion: reduce) {
   .sidebar,
-  .main-shell {
+  .main-shell,
+  .sidebar .nav-item,
+  .sidebar .sidebar-backup {
     transition: none;
   }
+}
+
+.btn.danger {
+  color: var(--red);
+  background: #fff5f5;
+  border-color: #f1c5c5;
+}
+.btn.danger:hover:not(:disabled) {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
 }

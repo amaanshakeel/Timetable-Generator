@@ -392,8 +392,9 @@ export function SettingsPanel({
             <button className="btn secondary" onClick={onLoadSample}>
               Load sample data
             </button>
-            <button className="btn secondary" onClick={onReset}>
-              Reset workspace
+            <button className="btn danger" onClick={onReset}>
+              <Trash2 size={16} />
+              Clear all data
             </button>
             <p className="muted small">
               Sample data and resets require confirmation. The previous saved
